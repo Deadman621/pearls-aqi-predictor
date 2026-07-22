@@ -182,6 +182,7 @@ The system shall be developed subject to the following constraints:
 - The system shall use Hopsworks as the Feature Store and Model Registry.
 - The system shall execute scheduled workflows using GitHub Actions.
 - The system shall follow a serverless architecture.
+- The system shall use a recognized AQI calculation standard for converting pollutant concentrations into AQI values.
 - The implementation shall use Python as the primary programming language.
 - The project shall be developed as an individual academic project.
 - The implementation shall comply with the usage limits imposed by external APIs and cloud services.
