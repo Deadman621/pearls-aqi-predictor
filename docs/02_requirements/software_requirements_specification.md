@@ -763,3 +763,29 @@ End User
 ## Postconditions
 
 The user understands factors influencing the forecast.
+
+---
+
+# Appendix B — Glossary
+
+| Term | Definition |
+|------|------------|
+| Air Quality Index (AQI) | A numerical indicator representing air pollution levels based on measured pollutant concentrations. |
+| API | A software interface that allows communication between different systems or services. |
+| AQI Forecast | A prediction of future air quality conditions based on predicted pollutant concentrations. |
+| CI/CD | Continuous Integration and Continuous Deployment practices used to automate software workflows. |
+| Feature | An input variable used by a machine learning model to make predictions. |
+| Feature Engineering | The process of transforming raw data into meaningful machine learning inputs. |
+| Feature Store | A centralized system for storing and managing machine learning features. |
+| Forecast Horizon | The future time period for which predictions are generated. |
+| Ground Truth | The actual observed value used to evaluate model predictions. |
+| Inference | The process of using a trained machine learning model to generate predictions. |
+| Machine Learning Model | A computational algorithm trained on historical data to make predictions on new data. |
+| Model Registry | A system used to store, version, and manage trained machine learning models. |
+| MLOps | Practices that combine machine learning development and operational workflows to automate model deployment and maintenance. |
+| Pollutant Concentration | The measured quantity of a pollutant present in the atmosphere, such as PM₂.₅, PM₁₀, or NO₂. |
+| Prediction Pipeline | The workflow responsible for generating future pollutant forecasts and AQI values. |
+| Regression Metric | A measurement used to evaluate continuous prediction performance, such as MAE, RMSE, or R² score. |
+| Serverless Architecture | A cloud architecture where infrastructure management is handled by managed services rather than manually maintained servers. |
+| SHAP | A method for explaining machine learning model predictions by measuring feature contributions. |
+| Time Series Data | Data collected sequentially over time where previous observations may influence future values. |
