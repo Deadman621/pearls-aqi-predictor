@@ -1,64 +1,114 @@
-# ADR-004: OpenWeather as Primary Data Source
+# ADR-003: External Data Provider Selection
 
-## Status
+**Status:** Accepted
 
-Accepted
-
-## Date
-
-2026-07-22
+**Date:** 2026-07-22
 
 ## Context
 
-The project requires weather observations and air pollution data from an external provider.
+The AQI prediction system requires a reliable external data provider to support the complete machine learning lifecycle, including:
 
-Several providers were considered.
+- Historical data collection for model training
+- Real-time data ingestion
+- Hourly feature pipeline execution
+- Daily model retraining
+- Real-time prediction
+- Weather feature engineering
+
+The project requires access to:
+
+- Historical meteorological observations
+- Historical air pollutant concentrations
+- Current weather and air pollution observations
+- Air pollution forecasts for comparison
+- Hourly data granularity
+
+Two candidate providers were evaluated:
+
+- **OpenWeather**
+- **AQICN (World Air Quality Index Project)**
 
 ## Decision
 
-OpenWeather shall be used as the primary provider for weather and air pollution data.
+The system shall use **OpenWeather** as the sole external data provider.
 
-## Alternatives Considered
+## Rationale
 
-### Alternative 1 — AQICN
+### Complete Data Coverage
 
-Pros
+OpenWeather provides a unified set of APIs that satisfy all project requirements.
 
-- AQI focused
-- Large coverage
+The Air Pollution API includes:
 
-Cons
+- Historical hourly air pollution data (available from **27 November 2020**)
+- Current air pollution observations
+- Four-day hourly air pollution forecasts
+- Pollutant concentrations for:
+  - PM₂.₅
+  - PM₁₀
+  - NO
+  - NO₂
+  - SO₂
+  - CO
+  - O₃
+  - NH₃
 
-- Less integrated weather information
-- AQI-centric rather than pollutant-centric
+Additionally, OpenWeather provides meteorological data required for feature engineering, allowing both weather variables and pollutant concentrations to originate from the same provider.
 
-Rejected.
+### Consistent Machine Learning Pipeline
 
-### Alternative 2 — OpenWeather
+Using a single provider ensures consistency between:
 
-Pros
+- Historical training data
+- Real-time inference data
+- Scheduled feature pipeline execution
 
-- Weather API
-- Air Pollution API
-- Consistent authentication
-- Comprehensive documentation
+This eliminates the need to reconcile datasets from multiple providers that may differ in timestamps, units, or measurement methodologies.
 
-Selected.
+### Evaluation of AQICN
+
+AQICN was evaluated as an alternative data provider.
+
+Although AQICN offers current air quality observations and downloadable historical data, it was not selected because:
+
+- The historical archive for Karachi contains **daily PM₂.₅ AQI values only**.
+- The historical archive currently extends only until **March 2025**, leaving a significant gap between the latest available data and the present.
+- Historical observations for the remaining required pollutant gases (PM₁₀, NO₂, SO₂, CO, O₃, NH₃) are not available through the evaluated historical dataset.
+- The available historical data does not satisfy the project's requirement for hourly observations.
+
+Consequently, AQICN cannot support the selected one-model-per-pollutant forecasting strategy.
 
 ## Consequences
 
-Positive
+### Positive
 
-- Unified API
-- Simplified data collection
-- Easier maintenance
+- Single external dependency
+- Unified data format across the entire pipeline
+- Simplified feature engineering
+- Simplified maintenance
+- Supports hourly feature pipeline execution
+- Supports automated model retraining
+- Provides historical and real-time pollutant concentrations required for model training
+- Eliminates data synchronization issues between multiple providers
 
-Negative
+### Negative
 
-- Historical data availability may depend on subscription tier
-- API limits must be managed
+- The system depends on the availability and reliability of OpenWeather services.
+- Changes to OpenWeather pricing or API policies may require future migration.
+- Historical endpoint availability depends on the selected OpenWeather subscription plan.
 
-## Related Documents
+## Alternatives Considered
 
-- Data Design
-- Feature Engineering
+### AQICN
+
+Rejected because the evaluated historical dataset:
+
+- Provides only daily PM₂.₅ AQI values for Karachi.
+- Does not provide complete historical pollutant concentration data required by the selected architecture.
+- Does not provide sufficiently current historical observations for continuous retraining.
+
+## Related Decisions
+
+- ADR-001 — Prediction Target
+- ADR-002 — Forecast Granularity
+- ADR-004 — Model Strategy
