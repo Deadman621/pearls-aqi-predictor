@@ -152,3 +152,189 @@ The following assumptions are made throughout the project:
 - Internet connectivity is available whenever scheduled pipelines execute.
 - External API schemas remain stable throughout the project duration.
 - Required API credentials are valid throughout development and deployment.
+
+---
+
+# 3. Functional Requirements
+
+## 3.1 Data Collection
+
+### FR-001
+
+**Title:** Historical Air Pollution Data Collection
+
+**Description:**
+
+The system shall retrieve historical hourly air pollution observations for Karachi from OpenWeather to construct the training dataset.
+
+---
+
+### FR-002
+
+**Title:** Historical Weather Data Collection
+
+**Description:**
+
+The system shall retrieve historical meteorological observations for Karachi from OpenWeather to support feature engineering.
+
+---
+
+### FR-003
+
+**Title:** Real-Time Data Collection
+
+**Description:**
+
+The system shall retrieve current meteorological and air pollution observations at scheduled intervals for prediction and model maintenance.
+
+---
+
+## 3.2 Feature Engineering
+
+### FR-004
+
+**Title:** Feature Generation
+
+**Description:**
+
+The system shall generate machine learning features from collected environmental observations, including temporal and derived features required for pollutant forecasting.
+
+---
+
+### FR-005
+
+**Title:** Feature Storage
+
+**Description:**
+
+The system shall store engineered features in the configured Feature Store for training and inference.
+
+---
+
+## 3.3 Model Training
+
+### FR-006
+
+**Title:** Pollutant Model Training
+
+**Description:**
+
+The system shall train independent forecasting models for each target pollutant using historical feature data.
+
+---
+
+### FR-007
+
+**Title:** Model Evaluation
+
+**Description:**
+
+The system shall evaluate trained models using predefined regression metrics before deployment.
+
+---
+
+### FR-008
+
+**Title:** Model Registration
+
+**Description:**
+
+The system shall register successfully trained models in the configured Model Registry.
+
+---
+
+## 3.4 Prediction
+
+### FR-009
+
+**Title:** Pollutant Forecasting
+
+**Description:**
+
+The system shall generate hourly forecasts of pollutant concentrations for the next three days.
+
+---
+
+### FR-010
+
+**Title:** AQI Calculation
+
+**Description:**
+
+The system shall derive Air Quality Index (AQI) values from the predicted pollutant concentrations using the selected AQI calculation methodology.
+
+---
+
+## 3.5 Explainability
+
+### FR-011
+
+**Title:** Prediction Explainability
+
+**Description:**
+
+The system shall provide explanations for model predictions using SHAP.
+
+---
+
+## 3.6 Dashboard
+
+### FR-012
+
+**Title:** Forecast Visualization
+
+**Description:**
+
+The system shall present pollutant forecasts and derived AQI values through an interactive web dashboard.
+
+---
+
+### FR-013
+
+**Title:** Forecast Comparison
+
+**Description:**
+
+The system shall display OpenWeather forecast values alongside system-generated forecasts for comparison purposes.
+
+---
+
+### FR-014
+
+**Title:** Hazard Alerts
+
+**Description:**
+
+The system shall identify and highlight forecast periods where predicted AQI exceeds predefined hazardous thresholds.
+
+---
+
+## 3.7 Workflow Automation
+
+### FR-015
+
+**Title:** Feature Pipeline Scheduling
+
+**Description:**
+
+The system shall execute the feature engineering pipeline automatically according to a predefined schedule.
+
+---
+
+### FR-016
+
+**Title:** Automated Model Retraining
+
+**Description:**
+
+The system shall retrain forecasting models automatically according to a predefined schedule.
+
+---
+
+### FR-017
+
+**Title:** Prediction Pipeline Execution
+
+**Description:**
+
+The system shall generate updated forecasts automatically after new observations become available.
