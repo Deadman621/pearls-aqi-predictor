@@ -410,3 +410,109 @@ Authentication with external services shall be performed using API keys or servi
 The system has no direct hardware interface requirements.
 
 The application shall execute on commodity computing hardware capable of running Python applications and accessing cloud services via the Internet.
+
+---
+
+# 5. Non-Functional Requirements
+
+## 5.1 Performance
+
+### NFR-001
+
+The system shall generate a three-day hourly air quality forecast within **10 seconds** under normal operating conditions.
+
+---
+
+### NFR-002
+
+The feature engineering pipeline shall complete within **15 minutes** for each scheduled execution.
+
+---
+
+### NFR-003
+
+The model training pipeline shall complete within **2 hours** under normal operating conditions.
+
+---
+
+## 5.2 Reliability
+
+### NFR-004
+
+The system shall gracefully handle temporary failures of external APIs and report appropriate error messages.
+
+---
+
+### NFR-005
+
+The system shall record pipeline execution failures for troubleshooting purposes.
+
+---
+
+## 5.3 Availability
+
+### NFR-006
+
+The system shall be capable of executing scheduled workflows without manual intervention.
+
+---
+
+## 5.4 Maintainability
+
+### NFR-007
+
+The system shall maintain a modular architecture separating data collection, feature engineering, model training, prediction, and presentation components.
+
+---
+
+### NFR-008
+
+The system shall maintain version control for source code and project documentation using Git.
+
+---
+
+### NFR-009
+
+The system shall maintain versioned machine learning models through the configured Model Registry.
+
+---
+
+## 5.5 Usability
+
+### NFR-010
+
+The dashboard shall present forecasts using clear visualizations that are understandable without requiring knowledge of machine learning algorithms.
+
+---
+
+### NFR-011
+
+The dashboard shall clearly distinguish between system-generated forecasts and reference forecasts obtained from external providers.
+
+---
+
+## 5.6 Security
+
+### NFR-012
+
+The system shall store API credentials securely and shall not expose sensitive credentials within the source code repository.
+
+---
+
+### NFR-013
+
+The system shall communicate with external services using encrypted HTTPS connections.
+
+---
+
+## 5.7 Reproducibility
+
+### NFR-014
+
+The system shall support reproducible model training through version-controlled source code, feature definitions, and registered model artifacts.
+
+---
+
+### NFR-015
+
+The system shall document all external dependencies required to reproduce the development environment.
