@@ -338,3 +338,75 @@ The system shall retrain forecasting models automatically according to a predefi
 **Description:**
 
 The system shall generate updated forecasts automatically after new observations become available.
+
+---
+
+# 4. External Interface Requirements
+
+## 4.1 User Interface
+
+### UI-001 Dashboard
+
+The system shall provide a web-based dashboard accessible through a modern web browser.
+
+The dashboard shall allow the user to:
+
+- View predicted hourly AQI for the next three days.
+- View predicted pollutant concentrations.
+- View historical air quality trends.
+- View model explainability visualizations.
+- Compare system forecasts with OpenWeather forecasts.
+- View hazardous air quality alerts.
+
+---
+
+## 4.2 Software Interfaces
+
+### SI-001 OpenWeather API
+
+The system shall communicate with the OpenWeather APIs to retrieve:
+
+- Historical weather observations.
+- Historical air pollution observations.
+- Current weather observations.
+- Current air pollution observations.
+- Air pollution forecasts.
+
+---
+
+### SI-002 Hopsworks
+
+The system shall communicate with Hopsworks to:
+
+- Store engineered features.
+- Retrieve features for training and inference.
+- Register trained models.
+- Retrieve production models for prediction.
+
+---
+
+### SI-003 GitHub Actions
+
+The system shall use GitHub Actions to automate scheduled workflows, including:
+
+- Feature pipeline execution.
+- Model retraining.
+- Prediction pipeline execution.
+
+---
+
+## 4.3 Communication Interfaces
+
+The system shall communicate with external services using secure HTTPS connections.
+
+External APIs shall exchange data using JSON over REST.
+
+Authentication with external services shall be performed using API keys or service credentials as required.
+
+---
+
+## 4.4 Hardware Interfaces
+
+The system has no direct hardware interface requirements.
+
+The application shall execute on commodity computing hardware capable of running Python applications and accessing cloud services via the Internet.
