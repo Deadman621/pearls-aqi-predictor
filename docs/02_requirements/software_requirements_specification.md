@@ -606,3 +606,160 @@ The deployed application is accessible through a web browser.
 ### AC-015
 
 The system can execute the complete workflow without manual intervention after deployment.
+
+---
+
+# Appendix A — Use Cases
+
+## A.1 Actors
+
+| Actor | Description |
+|------|-------------|
+| End User | A user who accesses the dashboard to view AQI forecasts and analysis. |
+| System Administrator | The project developer responsible for maintaining pipelines, models, and configurations. |
+| External Data Provider | OpenWeather service that provides weather and air pollution data. |
+
+---
+
+# UC-001: View AQI Forecast
+
+## Description
+
+The user views the predicted Air Quality Index and pollutant forecasts for Karachi.
+
+## Primary Actor
+
+End User
+
+## Preconditions
+
+- The prediction service is available.
+- Trained models are available.
+
+## Main Flow
+
+1. User opens the web dashboard.
+2. System retrieves the latest available predictions.
+3. System displays:
+   - Predicted AQI values.
+   - Predicted pollutant concentrations.
+   - Forecast timeline.
+4. User reviews the forecast information.
+
+## Postconditions
+
+The user successfully views the latest AQI forecast.
+
+---
+
+# UC-002: Generate Predictions
+
+## Description
+
+The system generates future pollutant concentration predictions and calculates AQI values.
+
+## Primary Actor
+
+System
+
+## Preconditions
+
+- Trained models are available.
+- Required input features are available.
+
+## Main Flow
+
+1. System retrieves required features.
+2. System loads the registered prediction models.
+3. System generates pollutant forecasts.
+4. System calculates AQI from predicted pollutant concentrations.
+5. System stores or serves the generated forecast.
+
+## Postconditions
+
+A new AQI forecast is available for visualization.
+
+---
+
+# UC-003: Execute Data Pipeline
+
+## Description
+
+The system collects new environmental observations and updates the Feature Store.
+
+## Primary Actor
+
+System Administrator / Automated Workflow
+
+## Preconditions
+
+- External APIs are available.
+- API credentials are configured.
+
+## Main Flow
+
+1. Scheduled workflow starts.
+2. System requests weather and pollution data from OpenWeather.
+3. System processes incoming data.
+4. System generates engineered features.
+5. System stores updated features.
+
+## Postconditions
+
+The Feature Store contains updated environmental features.
+
+---
+
+# UC-004: Retrain Prediction Models
+
+## Description
+
+The system periodically retrains pollutant forecasting models using updated historical data.
+
+## Primary Actor
+
+System Administrator / Automated Workflow
+
+## Preconditions
+
+- Updated training data is available.
+- Training environment is available.
+
+## Main Flow
+
+1. Scheduled training workflow starts.
+2. System retrieves training features.
+3. System trains pollutant prediction models.
+4. System evaluates model performance.
+5. System registers successful models.
+
+## Postconditions
+
+Updated models are available for future predictions.
+
+---
+
+# UC-005: Analyze Prediction Explanations
+
+## Description
+
+The user views explanations of model predictions.
+
+## Primary Actor
+
+End User
+
+## Preconditions
+
+- Predictions have been generated.
+- SHAP explanations are available.
+
+## Main Flow
+
+1. User opens the explanation section.
+2. System loads prediction explanations.
+3. System displays feature contributions affecting predictions.
+
+## Postconditions
+
+The user understands factors influencing the forecast.
