@@ -8,6 +8,54 @@
 
 ---
 
+# Table of Contents
+
+- [1. Introduction](#1-introduction)
+  - [1.1 Purpose](#11-purpose)
+  - [1.2 Scope](#12-scope)
+  - [1.3 Definitions, Acronyms, and Abbreviations](#13-definitions-acronyms-and-abbreviations)
+  - [1.4 References](#14-references)
+
+- [2. Overall Description](#2-overall-description)
+  - [2.1 Product Perspective](#21-product-perspective)
+  - [2.2 Product Functions](#22-product-functions)
+  - [2.3 User Classes and Characteristics](#23-user-classes-and-characteristics)
+  - [2.4 Operating Environment](#24-operating-environment)
+  - [2.5 Design and Implementation Constraints](#25-design-and-implementation-constraints)
+  - [2.6 Assumptions and Dependencies](#26-assumptions-and-dependencies)
+
+- [3. Functional Requirements](#3-functional-requirements)
+  - [3.1 Data Collection](#31-data-collection)
+  - [3.2 Feature Engineering](#32-feature-engineering)
+  - [3.3 Model Training](#33-model-training)
+  - [3.4 Prediction](#34-prediction)
+  - [3.5 Explainability](#35-explainability)
+  - [3.6 Dashboard](#36-dashboard)
+  - [3.7 Workflow Automation](#37-workflow-automation)
+
+- [4. External Interface Requirements](#4-external-interface-requirements)
+  - [4.1 User Interface](#41-user-interface)
+  - [4.2 Software Interfaces](#42-software-interfaces)
+  - [4.3 Communication Interfaces](#43-communication-interfaces)
+  - [4.4 Hardware Interfaces](#44-hardware-interfaces)
+
+- [5. Non-Functional Requirements](#5-non-functional-requirements)
+  - [5.1 Performance](#51-performance)
+  - [5.2 Reliability](#52-reliability)
+  - [5.3 Availability](#53-availability)
+  - [5.4 Maintainability](#54-maintainability)
+  - [5.5 Usability](#55-usability)
+  - [5.6 Security](#56-security)
+  - [5.7 Reproducibility](#57-reproducibility)
+
+- [6. Acceptance Criteria](#6-acceptance-criteria)
+
+- [Appendix A — Use Cases](#appendix-a--use-cases)
+
+- [Appendix B — Glossary](#appendix-b--glossary)
+
+---
+
 # 1. Introduction
 
 ## 1.1 Purpose
