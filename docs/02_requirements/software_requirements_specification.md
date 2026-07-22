@@ -516,3 +516,93 @@ The system shall support reproducible model training through version-controlled 
 ### NFR-015
 
 The system shall document all external dependencies required to reproduce the development environment.
+
+---
+
+# 6. Acceptance Criteria
+
+The Pearls AQI Predictor shall be considered complete when the following criteria are satisfied.
+
+---
+
+## 6.1 Data Pipeline
+
+### AC-001
+
+The system successfully retrieves historical weather and air pollution data for Karachi from OpenWeather.
+
+### AC-002
+
+The system successfully executes the automated feature engineering pipeline and stores generated features in the Feature Store.
+
+### AC-003
+
+The system successfully retrieves new environmental observations according to the configured schedule.
+
+---
+
+## 6.2 Machine Learning Pipeline
+
+### AC-004
+
+The system successfully trains pollutant forecasting models using historical environmental data.
+
+### AC-005
+
+The trained models are evaluated using regression metrics including:
+
+- Mean Absolute Error (MAE)
+- Root Mean Squared Error (RMSE)
+- R² Score
+
+### AC-006
+
+The trained models are successfully registered in the Model Registry.
+
+---
+
+## 6.3 Forecasting System
+
+### AC-007
+
+The system generates hourly pollutant concentration forecasts for the next three days.
+
+### AC-008
+
+The system successfully calculates AQI values from predicted pollutant concentrations.
+
+### AC-009
+
+The dashboard displays forecasted AQI values and pollutant concentrations.
+
+---
+
+## 6.4 Explainability and Visualization
+
+### AC-010
+
+The system provides model prediction explanations using SHAP visualizations.
+
+### AC-011
+
+The dashboard displays comparison between system-generated forecasts and OpenWeather forecasts.
+
+### AC-012
+
+The dashboard identifies forecast periods with hazardous AQI levels.
+
+---
+
+## 6.5 Automation and Deployment
+
+### AC-013
+
+The automated workflows execute successfully through GitHub Actions.
+
+### AC-014
+
+The deployed application is accessible through a web browser.
+
+### AC-015
+
+The system can execute the complete workflow without manual intervention after deployment.
