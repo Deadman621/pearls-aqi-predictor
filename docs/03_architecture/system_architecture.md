@@ -109,3 +109,11 @@ The architecture is guided by the following approved Architectural Decision Reco
 | ADR-005 | Use Hopsworks as the Feature Store and Model Registry. |
 | ADR-006 | Use GitHub Actions for workflow automation. |
 | ADR-007 | Use FastAPI as the backend framework. |
+
+---
+
+# 4. System Context
+
+The Pearls AQI Predictor operates within a broader ecosystem of external users and cloud services. At the highest level, the system collects environmental observations from OpenWeather, stores machine learning assets in Hopsworks, executes scheduled workflows using GitHub Actions, and provides AQI forecasts to end users through a web dashboard.
+
+The system boundary consists of all software developed as part of the Pearls AQI Predictor. External services communicate with the system through well-defined interfaces and are not considered part of the application architecture.
