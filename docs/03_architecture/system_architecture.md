@@ -121,3 +121,23 @@ The system boundary consists of all software developed as part of the Pearls AQI
 ![System Context Diagram](figures/context_diagram.svg)
 
 **Figure 4.1.** System Context Diagram showing the external actors and services interacting with the Pearls AQI Predictor.
+
+---
+
+# 5. Container Architecture
+
+The Pearls AQI Predictor consists of several independently deployable containers, each responsible for a specific aspect of the machine learning workflow. These containers communicate through well-defined interfaces and shared cloud services.
+
+The architecture is organized into three primary workflows:
+
+- Feature Pipeline
+- Training Pipeline
+- Prediction Pipeline
+
+Supporting these workflows are the FastAPI backend, Streamlit dashboard, Hopsworks Feature Store and Model Registry, OpenWeather API, and GitHub Actions for workflow orchestration.
+
+Separating these responsibilities improves maintainability, reproducibility, and scalability while allowing each workflow to execute independently according to its own schedule.
+
+![Container Diagram](figures/container_diagram.svg)
+
+**Figure 5.1.** Container Diagram showing the major containers within the Pearls AQI Predictor, including the Dashboard, Backend, Feature Pipeline, Prediction Pipeline, and Training Pipeline, along with their interactions with external services such as OpenWeather, Hopsworks, and GitHub Actions.
