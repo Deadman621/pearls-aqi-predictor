@@ -153,3 +153,60 @@ The component architecture decomposes the major application containers into thei
 ![FastAPI Backend Component Diagram](figures/backend_component_diagram.svg)
 
 **Figure 6.1.** FastAPI Backend Component Diagram showing the internal components responsible for handling API requests, formatting responses, and communicating with the prediction pipeline service.
+
+---
+
+## 6.2 Prediction Pipeline Component Diagram
+
+The Prediction Pipeline is responsible for executing the AQI prediction workflow after receiving a prediction request from the backend API. It coordinates feature retrieval, model inference, explainability generation, AQI computation, and response formatting through a centralized orchestration component.
+
+The Prediction Pipeline follows an orchestrator-based design where individual services remain loosely coupled. The Pipeline Orchestrator manages communication between components and provides the required prediction context to downstream services such as the SHAP Explainer and AQI Calculator.
+
+![Prediction Pipeline Component Diagram](figures/prediction_pipeline_component_diagram.svg)
+
+**Figure 6.2.** Prediction Pipeline Component Diagram showing the internal components responsible for feature retrieval, model inference, explainability generation, AQI calculation, and prediction response formatting. The Pipeline Orchestrator coordinates interactions between these components and external services including the Hopsworks Feature Store and Model Registry.
+
+### Prediction Pipeline Components
+
+#### Pipeline Orchestrator
+
+The Pipeline Orchestrator acts as the central coordination component of the prediction workflow. It manages the execution sequence and communication between prediction services.
+
+Responsibilities include:
+
+- Initiating prediction workflows.
+- Coordinating feature retrieval and model inference.
+- Passing prediction context to explainability and post-processing services.
+- Aggregating prediction outputs before response formatting.
+
+#### Feature Retriever
+
+The Feature Retriever obtains required input features from the Feature Store.
+
+It communicates with the Hopsworks Feature Store and provides standardized feature inputs to the prediction workflow.
+
+#### Inference Engine
+
+The Inference Engine performs model inference using the trained prediction models.
+
+It retrieves model artifacts through the Hopsworks Model Registry and generates pollutant concentration predictions.
+
+#### SHAP Explainer
+
+The SHAP Explainer generates feature contribution explanations for model predictions.
+
+The component receives prediction context from the Pipeline Orchestrator instead of directly depending on the Inference Engine, maintaining loose coupling between prediction execution and explainability generation.
+
+#### AQI Calculator
+
+The AQI Calculator derives the final AQI value from predicted pollutant concentrations according to the defined AQI calculation rules.
+
+#### Prediction Formatter
+
+The Prediction Formatter prepares the final prediction response by combining:
+
+- Pollutant predictions.
+- AQI results.
+- SHAP explanations.
+
+The formatted response is returned through the Prediction Pipeline API.
