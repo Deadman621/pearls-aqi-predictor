@@ -141,3 +141,15 @@ Separating these responsibilities improves maintainability, reproducibility, and
 ![Container Diagram](figures/container_diagram.svg)
 
 **Figure 5.1.** Container Diagram showing the major containers within the Pearls AQI Predictor, including the Dashboard, Backend, Feature Pipeline, Prediction Pipeline, and Training Pipeline, along with their interactions with external services such as OpenWeather, Hopsworks, and GitHub Actions.
+
+---
+
+# 6. Component Architecture
+
+The component architecture decomposes the major application containers into their internal software components and illustrates the relationships between them.
+
+## 6.1 FastAPI Backend Component Diagram
+
+![FastAPI Backend Component Diagram](figures/backend_component_diagram.svg)
+
+**Figure 6.1.** FastAPI Backend Component Diagram showing the internal components responsible for handling API requests, formatting responses, and communicating with the prediction pipeline service.
