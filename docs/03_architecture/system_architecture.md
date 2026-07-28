@@ -8,6 +8,8 @@
 
 ---
 
+# Table of Contents
+
 - [System Architecture](#system-architecture)
 - [1. Introduction](#1-introduction)
 - [2. Architectural Goals](#2-architectural-goals)
