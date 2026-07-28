@@ -272,3 +272,31 @@ Separating data extraction, feature engineering, validation, and persistence int
 ![Feature Pipeline Component Diagram](figures/feature_pipeline_component_diagram.svg)
 
 **Figure 6.4.** Feature Pipeline Component Diagram showing the internal components responsible for raw data extraction, feature transformation, data validation, and feature storage, together with their interactions with the OpenWeather API and the Hopsworks Feature Store.
+
+---
+
+## 6.5 Dashboard Component Diagram
+
+The Dashboard Component is responsible for processing user requests, retrieving historical environmental metrics, querying model inference endpoints, and serving transformed analytical data to the user interface. The overall request-response flow is coordinated by the Dashboard Controller, which manages the lifecycle of data retrieval and visualization preparation.
+
+**Dashboard Controller**
+
+The Dashboard Controller receives incoming requests through the Dashboard Interface. It orchestrates the end-to-end data processing workflow by delegating tasks to dedicated sub-services to retrieve historical metrics, fetch predictions, and format dashboard view models.
+
+**Dashboard Service**
+
+The Dashboard Service aggregates, formats, and prepares the core dashboard data, transforming raw domain models into optimized view models tailored for frontend presentation.
+
+**Historical Data Service**
+
+The Historical Data Service queries and retrieves historical Air Quality Index (AQI) and weather metrics, providing the necessary contextual time-series data for analysis and display.
+
+**Prediction Service**
+
+The Prediction Service interacts with model inference endpoints to retrieve generated AQI predictions, enabling real-time forecasting displays on the dashboard interface.
+
+Separating controller orchestration, data formatting, historical queries, and prediction retrieval into dedicated services enhances modularity, maintainability, and testing isolation while streamlining integration with external backend infrastructure like the FastAPI Backend.
+
+![Feature Pipeline Component Diagram](figures/dashboard_component_diagram.svg)
+
+**Figure 6.5.** Dashboard Component Diagram showing the internal components responsible for controller orchestration, dashboard data formatting, historical data retrieval, and prediction fetching, together with their interactions with the FastAPI Backend.
