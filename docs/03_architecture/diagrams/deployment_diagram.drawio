@@ -1,0 +1,71 @@
+<mxfile host="65bd71144e">
+    <diagram id="wOdXw8cSGc38J5xi7Uor" name="UML Deployment Diagram">
+        <mxGraphModel dx="702" dy="563" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="33" value="«device»&#xa;User Client Device&#xa;[Web Browser]" style="shape=cube;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;darkOpacity=0.05;darkOpacity2=0.1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;align=center;verticalAlign=top;spacingTop=10;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="340" y="10" width="240" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="35" value="«execution environment»&#xa;Cloud Application Server&#xa;[Python Runtime Environment]" style="shape=cube;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;darkOpacity=0.05;darkOpacity2=0.1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;align=center;verticalAlign=top;spacingTop=10;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="550" y="220" width="300" height="350" as="geometry"/>
+                </mxCell>
+                <mxCell id="36" value="«artifact»&#xa;FastAPI Backend Service&#xa;(REST API Server)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=11;fontStyle=0;" parent="35" vertex="1">
+                    <mxGeometry x="60" y="180.00060606060606" width="210" height="65.9060606060606" as="geometry"/>
+                </mxCell>
+                <mxCell id="37" value="«artifact»&#xa;Prediction Service&#xa;(Scikit-learn / PyTorch Models)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=11;fontStyle=0;" parent="35" vertex="1">
+                    <mxGeometry x="60" y="260.0030303030303" width="210" height="71.97272727272727" as="geometry"/>
+                </mxCell>
+                <mxCell id="52" value="«artifact»&lt;br&gt;Streamlit Dashboard&lt;br&gt;(Web User Interface)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=11;fontStyle=0;" parent="35" vertex="1">
+                    <mxGeometry x="60" y="90.00151515151515" width="210" height="71.97272727272727" as="geometry"/>
+                </mxCell>
+                <mxCell id="38" value="«execution environment»&#xa;GitHub Actions Runner&#xa;[CI/CD Workflow Host]" style="shape=cube;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;darkOpacity=0.05;darkOpacity2=0.1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;align=center;verticalAlign=top;spacingTop=10;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="260" width="300" height="280" as="geometry"/>
+                </mxCell>
+                <mxCell id="39" value="«artifact»&#xa;Feature Engineering Pipeline&#xa;(Scheduled ETL Workflow)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=11;fontStyle=0;" parent="38" vertex="1">
+                    <mxGeometry x="50" y="100" width="220" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="40" value="«artifact»&#xa;Model Training Pipeline&#xa;(Scheduled Retraining Workflow)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=11;fontStyle=0;" parent="38" vertex="1">
+                    <mxGeometry x="50" y="190" width="220" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="41" value="«cloud»&#xa;Hopsworks Platform&#xa;[Managed MLOps Infrastructure]" style="shape=cube;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;darkOpacity=0.05;darkOpacity2=0.1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;align=center;verticalAlign=top;spacingTop=10;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="570" y="745" width="280" height="260" as="geometry"/>
+                </mxCell>
+                <mxCell id="42" value="«component»&#xa;Hopsworks Feature Store&#xa;(Engineered AQI Features)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=11;fontStyle=0;" parent="41" vertex="1">
+                    <mxGeometry x="50" y="90" width="200" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="43" value="«component»&#xa;Hopsworks Model Registry&#xa;(Versioned ML Models)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=11;fontStyle=0;" parent="41" vertex="1">
+                    <mxGeometry x="50" y="170" width="200" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="44" value="«cloud»&#xa;OpenWeather Services&#xa;[External Data Provider]" style="shape=cube;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;darkOpacity=0.05;darkOpacity2=0.1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;align=center;verticalAlign=top;spacingTop=10;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="760" width="280" height="230" as="geometry"/>
+                </mxCell>
+                <mxCell id="45" value="«service»&#xa;OpenWeather REST API&#xa;(Air Quality &amp; Weather Data)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;fontSize=11;fontStyle=0;" parent="44" vertex="1">
+                    <mxGeometry x="60" y="100" width="200" height="92" as="geometry"/>
+                </mxCell>
+                <mxCell id="46" value="«HTTPS / REST»" style="endArrow=none;html=1;rounded=0;strokeWidth=1.5;strokeColor=#333333;fontSize=10;fontStyle=2;labelBackgroundColor=#FFFFFF;" parent="1" source="33" target="35" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="47" value="«HTTPS / REST»&#xa;Load Features &amp; Models" style="endArrow=none;html=1;rounded=0;strokeWidth=1.5;strokeColor=#333333;fontSize=10;fontStyle=2;labelBackgroundColor=#FFFFFF;" parent="1" source="35" target="41" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="48" value="«HTTPS / REST»&#xa;Fetch Weather Observations" style="endArrow=none;html=1;rounded=0;strokeWidth=1.5;strokeColor=#333333;fontSize=10;fontStyle=2;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0;exitDx=160;exitDy=280;exitPerimeter=0;entryX=0;entryY=0;entryDx=130;entryDy=0;entryPerimeter=0;" parent="1" source="38" target="44" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="210" y="810" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="49" value="«HTTPS / REST»&#xa;Push Features &amp; Register Models" style="endArrow=none;html=1;rounded=0;strokeWidth=1.5;strokeColor=#333333;fontSize=10;fontStyle=2;labelBackgroundColor=#FFFFFF;" parent="1" source="38" target="41" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="54" style="edgeStyle=none;html=1;entryX=0;entryY=0;entryDx=0;entryDy=165;entryPerimeter=0;endArrow=none;endFill=0;" parent="1" source="38" target="35" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="59" value="&lt;span style=&quot;color: rgb(0, 0, 0); font-size: 10px; font-style: italic;&quot;&gt;«SSH / Deployments»&lt;/span&gt;&lt;br style=&quot;color: rgb(63, 63, 63); scrollbar-color: rgb(226, 226, 226) rgb(251, 251, 251); font-size: 10px; font-style: italic;&quot;&gt;&lt;span style=&quot;color: rgb(0, 0, 0); font-size: 10px; font-style: italic;&quot;&gt;Deploy Application&lt;/span&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="54" vertex="1" connectable="0">
+                    <mxGeometry x="-0.0859" y="4" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

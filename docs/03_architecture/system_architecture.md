@@ -331,3 +331,53 @@ Delegating inference execution to a dedicated Prediction Pipeline encapsulates H
 ![Prediction Data Flow Diagram](figures/prediction_data_flow_diagram.svg)
 
 **Figure 6.6.** Prediction Data Flow Diagram showing the sequence of operations from client prediction requests through delegation to the Prediction Pipeline, feature and artifact fetching from Hopsworks, inference execution with SHAP explanations, and payload delivery back to the Dashboard Interface.
+
+---
+
+## 6.5 Deployment Diagram
+
+The Deployment Diagram illustrates the physical deployment of the Air Quality Prediction System across its execution environments and external services. The system is deployed using a distributed architecture consisting of a Cloud Application Server for serving prediction requests, a GitHub Actions Runner for executing automated data engineering and model training workflows, the Hopsworks Platform for managed MLOps infrastructure, and the OpenWeather services for external data acquisition.
+
+**User Client Device**
+
+Users interact with the system through a standard web browser hosted on the User Client Device. All user requests are transmitted securely over HTTPS to the Cloud Application Server, where the dashboard interface and backend services are deployed.
+
+**Cloud Application Server**
+
+The Cloud Application Server hosts the runtime components responsible for serving prediction requests.
+
+The Streamlit Dashboard provides the web-based user interface, allowing users to submit prediction requests and visualize air quality forecasts.
+
+The FastAPI Backend Service exposes REST API endpoints that coordinate feature retrieval, model loading, and prediction requests.
+
+The Prediction Service performs inference using the deployed machine learning models retrieved from the Hopsworks Model Registry.
+
+The Cloud Application Server communicates with the Hopsworks Platform to retrieve engineered features from the Feature Store and the latest approved models from the Model Registry.
+
+**GitHub Actions Runner**
+
+The GitHub Actions Runner hosts the automated CI/CD workflows responsible for data engineering and model lifecycle management.
+
+The Feature Engineering Pipeline periodically retrieves weather and air quality observations from the OpenWeather REST API, performs feature engineering, and publishes engineered features to the Hopsworks Feature Store.
+
+The Model Training Pipeline periodically retrains pollutant prediction models using the latest engineered features and registers approved models within the Hopsworks Model Registry.
+
+The GitHub Actions Runner also deploys updated application components to the Cloud Application Server as part of the automated deployment workflow.
+
+**Hopsworks Platform**
+
+The Hopsworks Platform provides the managed machine learning infrastructure supporting both training and inference.
+
+The Hopsworks Feature Store stores engineered air quality features used by the Feature Engineering Pipeline during training and by the Prediction Service during inference.
+
+The Hopsworks Model Registry stores versioned machine learning models produced by the Model Training Pipeline and supplies the latest approved models to the Prediction Service.
+
+**OpenWeather Services**
+
+OpenWeather Services provide the external weather and air quality observations required for feature engineering. The Feature Engineering Pipeline retrieves these observations through the OpenWeather REST API before constructing engineered features for storage in the Feature Store.
+
+Separating user-facing services, automated CI/CD workflows, managed MLOps infrastructure, and external data providers into independent deployment environments improves scalability, maintainability, security, and operational reliability while enabling automated data processing, model lifecycle management, and real-time prediction serving.
+
+![Deployment Diagram](figures/deployment_diagram.svg)
+
+**Figure 6.5.** Deployment Diagram showing the physical deployment of the Air Quality Prediction System across the User Client Device, Cloud Application Server, GitHub Actions Runner, Hopsworks Platform, and OpenWeather Services, together with the communication pathways supporting prediction serving, automated feature engineering, model training, model deployment, and external data acquisition.
