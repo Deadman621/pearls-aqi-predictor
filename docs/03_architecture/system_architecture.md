@@ -210,3 +210,33 @@ The Prediction Formatter prepares the final prediction response by combining:
 - SHAP explanations.
 
 The formatted response is returned through the Prediction Pipeline API.
+
+---
+
+## 6.3 Training Pipeline Component Diagram
+
+The Training Pipeline is responsible for constructing training datasets, training pollutant prediction models, evaluating model performance, and registering approved models for deployment. The workflow is coordinated by the Pipeline Orchestrator, which manages the complete training lifecycle.
+
+**Pipeline Orchestrator**
+
+The Pipeline Orchestrator begins a training run through the Training Pipeline Interface. It coordinates dataset construction, model training, model evaluation, and model registration while interacting with external machine learning services.
+
+**Dataset Builder**
+
+The Dataset Builder prepares training datasets by requesting historical feature data from the Training Feature Retriever, which retrieves the required records from the Hopsworks Feature Store.
+
+**Model Trainer**
+
+The Model Trainer trains pollutant-specific prediction models using the prepared datasets and records experiment metadata, metrics, and artifacts in the MLflow Tracking Server.
+
+**Model Evaluator**
+
+The Model Evaluator assesses the performance of newly trained models. During evaluation, the Pipeline Orchestrator retrieves the currently registered production models through the Model Registrar, enabling comparison between newly trained models and existing deployed models.
+
+Following evaluation, the Pipeline Orchestrator instructs the Model Registrar to register or promote approved models within the Hopsworks Model Registry.
+
+Separating training, evaluation, registration, and experiment tracking into dedicated components improves maintainability, reproducibility, and extensibility while supporting automated model lifecycle management.
+
+![Training Pipeline Component Diagram](figures/training_pipeline_component_diagram.svg)
+
+**Figure 6.3.** Training Pipeline Component Diagram showing the internal components responsible for dataset construction, feature retrieval, model training, evaluation, experiment tracking, and model registration, together with their interactions with the Hopsworks Feature Store, Hopsworks Model Registry, and MLflow Tracking Server.
