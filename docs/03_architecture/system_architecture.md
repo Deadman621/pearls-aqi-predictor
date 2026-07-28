@@ -300,3 +300,34 @@ Separating controller orchestration, data formatting, historical queries, and pr
 ![Feature Pipeline Component Diagram](figures/dashboard_component_diagram.svg)
 
 **Figure 6.5.** Dashboard Component Diagram showing the internal components responsible for controller orchestration, dashboard data formatting, historical data retrieval, and prediction fetching, together with their interactions with the FastAPI Backend.
+
+---
+
+## 6.6 Prediction Data Flow Diagram
+
+The Prediction Data Flow Diagram illustrates how real-time inference requests travel through the system—from initial user action on the dashboard to pipeline delegation, feature fetching, model evaluation, and final response delivery. The architecture emphasizes low-latency execution and strict decoupling between the API Gateway and external machine learning infrastructure by delegating inference tasks entirely to the Prediction Pipeline Component.
+
+**Dashboard Interface**
+
+The Dashboard Interface accepts user-initiated requests for air quality forecasts and submits them to the prediction endpoint on the FastAPI Backend.
+
+**FastAPI Backend**
+
+The FastAPI Backend functions as the system's API Gateway. To maintain a strict boundary separation, it delegates the entire prediction workflow to the Prediction Pipeline Component rather than interacting directly with underlying feature and model storage.
+
+**Prediction Pipeline Component**
+
+The Prediction Pipeline encapsulates the core inference lifecycle. Upon receiving a delegated execution request, it coordinates feature retrieval, model execution, calculations, and explanations:
+* **AQI Feature Store**: The pipeline fetches pre-engineered online feature vectors directly from the feature store on the Hopsworks platform.
+* **AQI Model Registry**: The pipeline loads trained model artifacts directly from the model registry on Hopsworks to execute real-time inference.
+* **Inference & Explanations**: The pipeline computes raw predictions, calculates domain-specific AQI metrics, and generates feature importance explanations using SHAP values before formatting the response into a unified payload.
+
+**Response Delivery**
+
+The formatted prediction payload is returned to the FastAPI Backend, which serves it back to the Dashboard Interface for user visualization.
+
+Delegating inference execution to a dedicated Prediction Pipeline encapsulates Hopsworks platform interactions, ensuring high maintainability, strict boundary isolation, and modular scalability across backend services.
+
+![Prediction Data Flow Diagram](figures/prediction_data_flow_diagram.svg)
+
+**Figure 6.6.** Prediction Data Flow Diagram showing the sequence of operations from client prediction requests through delegation to the Prediction Pipeline, feature and artifact fetching from Hopsworks, inference execution with SHAP explanations, and payload delivery back to the Dashboard Interface.
