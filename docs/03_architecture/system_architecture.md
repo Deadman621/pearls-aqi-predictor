@@ -1,3 +1,49 @@
+# System Architecture
+
+**Project:** Pearls AQI Predictor
+
+**Version:** 1.0
+
+**Date:** 2026-07-23
+
+---
+
+- [System Architecture](#system-architecture)
+- [1. Introduction](#1-introduction)
+- [2. Architectural Goals](#2-architectural-goals)
+  - [AG-001: Serverless Architecture](#ag-001-serverless-architecture)
+  - [AG-002: Modular Design](#ag-002-modular-design)
+  - [AG-003: Reproducibility](#ag-003-reproducibility)
+  - [AG-004: Automation](#ag-004-automation)
+  - [AG-005: Maintainability](#ag-005-maintainability)
+  - [AG-006: Explainability](#ag-006-explainability)
+  - [AG-007: Scalability](#ag-007-scalability)
+  - [AG-008: Traceability](#ag-008-traceability)
+- [3. Architectural Drivers](#3-architectural-drivers)
+  - [3.1 Functional Drivers](#31-functional-drivers)
+  - [3.2 Quality Attribute Drivers](#32-quality-attribute-drivers)
+  - [3.3 Architectural Constraints](#33-architectural-constraints)
+  - [3.4 Architectural Decision Records](#34-architectural-decision-records)
+- [4. System Context](#4-system-context)
+- [5. Container Architecture](#5-container-architecture)
+- [6. Component Architecture](#6-component-architecture)
+  - [6.1 FastAPI Backend Component Diagram](#61-fastapi-backend-component-diagram)
+  - [6.2 Prediction Pipeline Component Diagram](#62-prediction-pipeline-component-diagram)
+    - [Prediction Pipeline Components](#prediction-pipeline-components)
+      - [Pipeline Orchestrator](#pipeline-orchestrator)
+      - [Feature Retriever](#feature-retriever)
+      - [Inference Engine](#inference-engine)
+      - [SHAP Explainer](#shap-explainer)
+      - [AQI Calculator](#aqi-calculator)
+      - [Prediction Formatter](#prediction-formatter)
+  - [6.3 Training Pipeline Component Diagram](#63-training-pipeline-component-diagram)
+  - [6.4 Feature Pipeline Component Diagram](#64-feature-pipeline-component-diagram)
+  - [6.5 Dashboard Component Diagram](#65-dashboard-component-diagram)
+  - [6.6 Prediction Data Flow Diagram](#66-prediction-data-flow-diagram)
+  - [6.5 Deployment Diagram](#65-deployment-diagram)
+
+---
+
 # 1. Introduction
 
 This document describes the software architecture of the Pearls AQI Predictor system. It provides a high-level view of the system structure, identifies its major components, and explains how they interact to satisfy the requirements defined in the Software Requirements Specification (SRS).
