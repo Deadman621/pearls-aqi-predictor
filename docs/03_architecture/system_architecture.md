@@ -240,3 +240,35 @@ Separating training, evaluation, registration, and experiment tracking into dedi
 ![Training Pipeline Component Diagram](figures/training_pipeline_component_diagram.svg)
 
 **Figure 6.3.** Training Pipeline Component Diagram showing the internal components responsible for dataset construction, feature retrieval, model training, evaluation, experiment tracking, and model registration, together with their interactions with the Hopsworks Feature Store, Hopsworks Model Registry, and MLflow Tracking Server.
+
+---
+
+## 6.4 Feature Pipeline Component Diagram
+
+The Feature Pipeline is responsible for acquiring raw weather observations, transforming them into machine learning features, validating the generated feature set, and storing validated features in the AQI Feature Store. The workflow is coordinated by the Pipeline Orchestrator, which manages the complete feature engineering lifecycle.
+
+**Pipeline Orchestrator**
+
+The Pipeline Orchestrator initiates feature engineering through the Feature Pipeline Interface. It coordinates raw data extraction, feature transformation, data validation, and feature storage while managing the overall execution of the pipeline.
+
+**Raw Data Extractor**
+
+The Raw Data Extractor retrieves historical weather observations from the OpenWeather API and provides the raw data required for feature engineering.
+
+**Feature Transformer**
+
+The Feature Transformer processes the retrieved weather observations and applies feature engineering techniques to produce machine learning features suitable for downstream model training and inference.
+
+**Data Validator**
+
+The Data Validator verifies that the engineered features satisfy the required quality, schema, and consistency constraints before they are persisted.
+
+**Feature Writer**
+
+The Feature Writer stores the validated feature dataset in the AQI Feature Store hosted on the Hopsworks platform, making the features available to downstream machine learning pipelines.
+
+Separating data extraction, feature engineering, validation, and persistence into dedicated components improves maintainability, modularity, and extensibility while isolating interactions with external systems.
+
+![Feature Pipeline Component Diagram](figures/feature_pipeline_component_diagram.svg)
+
+**Figure 6.4.** Feature Pipeline Component Diagram showing the internal components responsible for raw data extraction, feature transformation, data validation, and feature storage, together with their interactions with the OpenWeather API and the Hopsworks Feature Store.
