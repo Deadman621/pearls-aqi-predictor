@@ -44,6 +44,16 @@
     - [4.3.5 ModelEvaluator](#435-modelevaluator)
     - [4.3.6 FineTunedModelRegistrar](#436-finetunedmodelregistrar)
   - [4.4 Pipeline Responsibilities](#44-pipeline-responsibilities)
+- [5. First-Time Model Training Pipeline Design](#5-first-time-model-training-pipeline-design)
+  - [5.1 Training Pipeline Class Diagram](#51-training-pipeline-class-diagram)
+  - [5.2 Pipeline Execution Workflow](#52-pipeline-execution-workflow)
+  - [5.3 Component Breakdown](#53-component-breakdown)
+    - [5.3.1 PipelineOrchestrator \& Configuration Classes](#531-pipelineorchestrator--configuration-classes)
+    - [5.3.2 FeatureRetriever \& DatasetBuilder](#532-featureretriever--datasetbuilder)
+    - [5.3.3 ModelTrainer \& BasePollutantModel Interface](#533-modeltrainer--basepollutantmodel-interface)
+    - [5.3.4 ModelEvaluator](#534-modelevaluator)
+    - [5.3.5 ModelRegistrar](#535-modelregistrar)
+  - [5.4 Pipeline Responsibilities](#54-pipeline-responsibilities)
 
 ---
 
@@ -451,4 +461,143 @@ The Model Finetuning Pipeline is strictly responsible for:
 * Streaming epoch-level metrics and loss logs to the MLflow Tracking Server.
 * Validating candidate model performance against production baselines using strict acceptance criteria.
 * Registering updated model adapters and artifacts back into the Hopsworks Model Registry.
+
+---
+
+# 5. First-Time Model Training Pipeline Design
+
+This section describes the detailed design of the First-Time Model Training Pipeline subsystem, which is responsible for building, evaluating, and registering baseline pollutant prediction models from scratch using historical atmospheric datasets.
+
+Unlike incremental retraining or fine-tuning, this pipeline initializes candidate model architectures, executes full feature engineering dataset splits, performs hyperparameter training across multiple model variants, evaluates candidate models to select the top performer for each pollutant, and registers the baseline artifacts into the Hopsworks Model Registry.
+
+---
+
+## 5.1 Training Pipeline Class Diagram
+
+The First-Time Model Training Pipeline uses an orchestrator pattern centered around the **PipelineOrchestrator**, which implements the **TrainingPipelineInterface**. The orchestrator coordinates interaction across configuration classes (**TrainingConfig**, **PollutantConfig**, **ModelConfig**), data ingestion components (**FeatureRetriever**, **DatasetBuilder**), model fitting engines (**ModelTrainer**, **PretrainedRegistry**, **Callbacks**), and evaluation/registration handlers (**ModelEvaluator**, **ModelRegistrar**).
+
+External connections to the **AQI Feature Store**, **MLflow Tracking Server**, and **AQI Model Registry** on the **Hopsworks Platform** are managed through dedicated interface boundaries.
+
+![Training Pipeline Class Diagram](figures/training_pipeline_class_diagram.svg)
+
+**Figure 5.1.** Static structure of the First-Time Model Training Pipeline subsystem. The pipeline orchestrator manages historical feature retrieval, training dataset construction, model initialization and fitting from scratch, experiment tracking via MLflow callbacks, best-model evaluation and selection, and baseline registration in Hopsworks.
+
+---
+
+## 5.2 Pipeline Execution Workflow
+
+The end-to-end execution of the first-time model training process follows a structured sequence:
+
+1. **Invocation**: The `PipelineOrchestrator` receives an execution trigger via `run_training_pipeline()`, taking a structured `TrainingConfig` object.
+2. **Feature Retrieval & Dataset Construction**:
+   * The `FeatureRetriever` executes `retrieve()` against the **AQI Feature Store** to pull historical meteorological and pollutant feature groups.
+   * The `DatasetBuilder` processes these raw feature sets via `construct()` to output a formatted `TrainingDataset` containing train, validation, and test splits along with feature scalers.
+
+
+3. **Model Initialization & Fitting**:
+   * The `ModelTrainer` reads hyperparameters from `ModelConfig` (`epochs`, `patience`, `learning_rate`, `do_training`) for each candidate model across pollutants defined in `PollutantConfig`.
+   * The trainer calls `train()` to fit models implementing the `BasePollutantModel` interface (`fit(dataset)`), referencing pretrained base dependencies via `PretrainedRegistry` if applicable and streaming training metrics to the **MLflow Tracking Server** via `Callbacks`.
+
+
+4. **Model Evaluation & Selection**:
+   * The `ModelEvaluator` computes performance metrics via `evaluate()` and compares candidate architectures using `compare()`.
+   * The `find_best(BasePollutantModel[])` method selects the optimal model variant for each pollutant based on minimal prediction error.
+
+
+5. **Model Registration**:
+   * The selected baseline model saves its artifacts locally via `save(path)`.
+   * The `ModelRegistrar` executes `register()` to upload saved binaries, performance metrics, and feature schemas to the **AQI Model Registry** on Hopsworks.
+
+
+
+---
+
+## 5.3 Component Breakdown
+
+### 5.3.1 PipelineOrchestrator & Configuration Classes
+
+These classes manage hierarchical pipeline settings for training candidate models from scratch across all evaluated atmospheric pollutants ($PM_{2.5}, PM_{10}, O_3, NO_2, SO_2, CO$).
+
+* **TrainingConfig**: Root configuration container aggregating `pollutant_config` arrays.
+* **PollutantConfig**: Holds pollutant-specific configurations and wraps target candidate models (`models`).
+* **ModelConfig**: Defines hyperparameters for individual candidate models:
+* `model_name`: Identifies the candidate model architecture (e.g., XGBoost, LightGBM, PyTorch MLP).
+* `do_training`: Boolean flag indicating whether to execute training for this candidate.
+* `epochs`: Total training passes over the dataset.
+* `patience`: Early stopping threshold to halt training when validation loss plateaus.
+* `learning_rate`: Optimization step size.
+
+
+
+---
+
+### 5.3.2 FeatureRetriever & DatasetBuilder
+
+These components handle historical feature access and dataset preparation.
+
+* **FeatureRetriever**:
+* `retrieve(): Features`: Queries the **AQI Feature Store** on Hopsworks to retrieve complete historical feature snapshots.
+
+
+* **DatasetBuilder**:
+* `construct(): TrainingDataset`: Performs temporal train/val/test splitting, sequence generation, scaling, and missing-data imputation to build a `TrainingDataset`.
+
+
+
+---
+
+### 5.3.3 ModelTrainer & BasePollutantModel Interface
+
+The core fitting engine initializes and trains candidate model architectures.
+
+* **ModelTrainer**:
+* `train(): TrainingStatus`: Manages full training loops across candidate models, logging epoch-level metrics and loss curves to the **MLflow Tracking Server** via `Callbacks`.
+
+
+* **PretrainedRegistry**: Provides access to optional base architecture weights or backbone configurations when initializing models.
+* **BasePollutantModel Interface**:
+* `config: TrainingConfig`: Property storing active model configuration details.
+* `fit(dataset): Metrics`: Trains the model architecture from scratch on the provided dataset split and returns evaluation metrics.
+* `predict(X): ndarray`: Generates numeric concentration predictions on input feature matrices.
+* `save(path): Path`: Exports complete model weights and pipeline artifacts to a specified local directory.
+
+
+
+---
+
+### 5.3.4 ModelEvaluator
+
+The `ModelEvaluator` performs performance analysis across candidate model variants.
+
+* **Methods**:
+* `evaluate(): Metrics`: Calculates test set metrics (RMSE, MAE, $R^2$, MAPE) for evaluated models.
+* `compare(): Metrics`: Generates comparative performance tables across candidate models for a given pollutant.
+* `find_best(BasePollutantModel[]): BasePollutantModel`: Identifies and returns the top-performing model candidate based on target evaluation metrics.
+
+
+
+---
+
+### 5.3.5 ModelRegistrar
+
+The `ModelRegistrar` commits approved baseline models to cloud infrastructure.
+
+* **Primary Responsibility**: Registers winning model candidates in the Hopsworks platform.
+* **Methods**:
+* `register(): RegistrationStatus`: Uploads model binaries, input/output schemas, and evaluation metrics to the **AQI Model Registry**, tagging them as initial production baselines.
+
+
+
+---
+
+## 5.4 Pipeline Responsibilities 
+
+The First-Time Model Training Pipeline is strictly responsible for:
+
+* Querying historical atmospheric feature records from the Hopsworks Feature Store.
+* Constructing partitioned train, validation, and test datasets with proper temporal boundaries.
+* Initializing and fitting baseline model candidates from scratch using configured hyperparameters.
+* Logging training parameters, loss trajectories, and artifacts to the MLflow Tracking Server.
+* Evaluating candidate models and selecting the top-performing model architecture per pollutant.
+* Registering approved baseline model artifacts into the Hopsworks Model Registry.
 
