@@ -64,6 +64,9 @@
     - [6.3.4 FeatureTransformer](#634-featuretransformer)
     - [6.3.5 FeatureWriter](#635-featurewriter)
   - [6.4 Pipeline Responsibilities](#64-pipeline-responsibilities)
+- [7. Repository Structure \& Source Code Architecture](#7-repository-structure--source-code-architecture)
+  - [7.1 Repository Layout](#71-repository-layout)
+  - [7.2 Component Mapping to Physical Architecture](#72-component-mapping-to-physical-architecture)
 
 ---
 
@@ -731,3 +734,144 @@ The Feature Pipeline is strictly responsible for:
 * Enforcing structural schema validation and value range checks on raw incoming payloads.
 * Processing raw observations into engineered lag, temporal, and aggregated feature matrices.
 * Persisting structured feature matrices to the Hopsworks Feature Store for downstream training, fine-tuning, and inference.
+
+Here is a complete, publication-ready **Repository and Project Structure Design** section tailored for your system architecture document.
+
+---
+
+# 7. Repository Structure & Source Code Architecture
+
+This section describes the physical source code organization, directory layout, and module boundaries designed for the project repository. The structure adheres to domain-driven design principles by decoupling core machine learning and data engineering pipelines from execution entry points (REST API, CLI, and Streamlit Dashboard).
+
+## 7.1 Repository Layout
+
+The project follows a standard modular Python package structure. All core logic resides within the `src/` directory, which can be installed in editable mode (`pip install -e .`) to ensure clean, relative-free absolute imports across modules.
+
+```text
+.
+├── .env.example                  # Template for local environment variables (API keys, Hopsworks, MLflow)
+├── .gitignore                    # Version control exclusion rules
+├── README.md                     # Technical overview, setup guides, and execution commands
+├── requirements.txt              # Production runtime dependencies
+├── requirements-dev.txt          # Development tools (pytest, black, flake8, mypy)
+├── setup.py                      # Package installation script enabling top-level `src` imports
+│
+├── docker/                       # Containerization configurations
+│   ├── Dockerfile.api            # Container image build spec for FastAPI backend service
+│   ├── Dockerfile.dashboard      # Container image build spec for Streamlit dashboard
+│   ├── Dockerfile.pipeline       # Container image build spec for pipeline execution tasks
+│   └── docker-compose.yml        # Service orchestration file for multi-container deployments
+│
+├── docs/                         # Lifecycle project documentation (Waterfall deliverables)
+│   ├── 01_initiation/            # Project charter & scope definitions
+│   ├── 02_requirements/          # Software Requirements Specification (SRS)
+│   ├── 03_architecture/          # System Architecture & Architectural Decision Records (ADRs)
+│   ├── 04_design/                # Detailed Subsystem Design (Class diagrams, workflows)
+│   ├── 05_quality/               # Quality assurance strategy, test cases, and coverage reports
+│   └── 06_deployment/            # CI/CD deployment procedures and operational guides
+│
+├── src/                          # System Source Code Package
+│   ├── __init__.py
+│   ├── config.py                 # Centralized configuration parser (Pydantic BaseSettings loading .env)
+│   ├── utils.py                  # Common utilities (logging setup, time-series formatting, exceptions)
+│   │
+│   ├── core/                     # Domain Abstractions & Base Interfaces
+│   │   ├── __init__.py
+│   │   ├── interfaces.py         # Abstract base classes (BasePollutantModel, Callbacks, Orchestrators)
+│   │   └── schemas.py            # Shared data transfer objects (Features, RawData, Metrics, Status)
+│   │
+│   ├── pipelines/                # Machine Learning & Data Pipeline Subsystems
+│   │   ├── __init__.py
+│   │   │
+│   │   ├── feature/              # Feature Ingestion & Processing Subsystem
+│   │   │   ├── __init__.py
+│   │   │   ├── extractor.py      # RawDataExtractor (OpenWeather API client)
+│   │   │   ├── validator.py      # DataValidator (payload schema & boundary verification)
+│   │   │   ├── transformer.py    # FeatureTransformer (lag variables, rolling windows, cyclical encodings)
+│   │   │   ├── writer.py         # FeatureWriter (Hopsworks Feature Store writer)
+│   │   │   └── orchestrator.py   # Feature Pipeline Orchestrator
+│   │   │
+│   │   ├── training/             # Baseline Model Training Subsystem
+│   │   │   ├── __init__.py
+│   │   │   ├── retriever.py      # FeatureRetriever (historical data snapshot reader)
+│   │   │   ├── builder.py        # DatasetBuilder (train/val/test temporal splits & scalers)
+│   │   │   ├── trainer.py        # ModelTrainer & PretrainedRegistry integration
+│   │   │   ├── evaluator.py      # ModelEvaluator (candidate comparison and selection)
+│   │   │   ├── registrar.py      # ModelRegistrar (saves winning models to Hopsworks Registry)
+│   │   │   ├── models/           # Concrete Pollutant Model Implementations
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── xgboost_model.py
+│   │   │   │   └── pytorch_model.py
+│   │   │   └── orchestrator.py   # Training Pipeline Orchestrator
+│   │   │
+│   │   ├── finetuning/           # Incremental Model Adaptation Subsystem
+│   │   │   ├── __init__.py
+│   │   │   ├── fetcher.py        # ModelFetcher (pulls active baseline from Hopsworks Registry)
+│   │   │   ├── finetuner.py      # FineTuner (executes adapter / gradient fine-tuning loops)
+│   │   │   ├── evaluator.py      # ModelEvaluator (validates candidate against baseline)
+│   │   │   ├── registrar.py      # FineTunedModelRegistrar (commits updated weights)
+│   │   │   └── orchestrator.py   # Fine-tuning Pipeline Orchestrator
+│   │   │
+│   │   └── prediction/           # Real-Time & Batch Inference Subsystem
+│   │       ├── __init__.py
+│   │       ├── engine.py         # InferenceEngine (executes batch/online predictions)
+│   │       ├── explainer.py      # SHAPExplainer (generates feature attributions)
+│   │       ├── aqi_calculator.py # AQICalculator (computes sub-indices & overall EPA AQI)
+│   │       ├── formatter.py      # PredictionFormatter (structures payload outputs)
+│   │       └── orchestrator.py   # Prediction Pipeline Orchestrator
+│   │
+│   ├── backend/                  # Application Service Layer (FastAPI REST API)
+│   │   ├── __init__.py
+│   │   ├── main.py               # FastAPI application factory and middleware configuration
+│   │   ├── dependencies.py       # Dependency injection containers
+│   │   ├── routers/              # HTTP Endpoint Controllers
+│   │   │   ├── __init__.py
+│   │   │   ├── health.py         # Liveness and readiness endpoints (/health)
+│   │   │   ├── prediction.py     # Inference endpoints (/api/v1/predict)
+│   │   │   └── pipeline.py       # Async pipeline trigger endpoints (/api/v1/pipeline)
+│   │   ├── services/             # Application Services
+│   │   │   ├── prediction_service.py
+│   │   │   └── feature_service.py
+│   │   └── schemas/              # FastAPI Request/Response Pydantic Schemas
+│   │       ├── request.py
+│   │       └── response.py
+│   │
+│   ├── dashboard/                # Web User Interface Subsystem (Streamlit)
+│   │   ├── __init__.py
+│   │   ├── app.py                # Dashboard application entry point
+│   │   ├── api_client.py         # Client wrapper for Backend REST API communication
+│   │   └── components/           # UI Renderers
+│   │       ├── aqi_gauge.py      # AQI numerical dial and severity badge component
+│   │       ├── charts.py         # Historical and forecast time-series renderers
+│   │       └── shap_plots.py     # SHAP feature importance plot components
+│   │
+│   └── cli/                      # Command Line Interface Subsystem
+│       ├── __init__.py
+│       ├── main.py               # Terminal parser entry point (Click / Typer)
+│       └── commands/             # CLI Command Handlers
+│           ├── feature_cmd.py    # `aqi-cli feature run` handler
+│           ├── train_cmd.py      # `aqi-cli train run` handler
+│           ├── finetune_cmd.py   # `aqi-cli finetune run` handler
+│           └── predict_cmd.py    # `aqi-cli predict` handler
+│
+├── tests/                        # Automated Testing Framework
+│   ├── unit/                     # Unit test suites for individual classes and functions
+│   ├── integration/              # Integration tests verifying Hopsworks & MLflow API connectivity
+│   └── e2e/                      # End-to-end API route and CLI execution tests
+│
+├── experiments/                  # Research, prototyping, and developer sandbox scripts
+└── notebooks/                    # Exploratory Data Analysis (EDA) and model experimentation notebooks
+
+```
+
+---
+
+## 7.2 Component Mapping to Physical Architecture
+
+The source structure directly maps each conceptual pipeline component to a dedicated Python file, guaranteeing strict separation of concerns and high testability:
+
+1. **`src/core/`**: Defines abstract classes (`BasePollutantModel`, `Callbacks`) and contract interfaces (`FeaturePipelineInterface`, `TrainingPipelineInterface`, `FineTuningPipelineInterface`, `PredictionPipelineInterface`). This isolates interface declarations from implementation details.
+2. **`src/pipelines/`**: Contains the four execution engines (**Feature**, **Training**, **Finetuning**, and **Prediction**). Modules in this package do not depend on specific delivery web frameworks (FastAPI, Streamlit, or Click), enabling them to be executed independently, scheduled as background worker jobs, or imported directly by server applications.
+3. **`src/backend/`**: Wraps the prediction and pipeline orchestration components inside HTTP REST routers. Pydantic schemas enforce type validation at runtime.
+4. **`src/cli/`**: Provides administrative command-line scripts to trigger pipelines and inspect system states without running the web server.
+5. **`src/dashboard/`**: Contains frontend visual components that communicate exclusively with the backend REST endpoints via a decoupled HTTP client (`api_client.py`).
