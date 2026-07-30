@@ -2,7 +2,7 @@
 
 **Project:** Pearls AQI Predictor
 
-**Version:** 1.0
+**Version:** 1.1
 
 **Date:** 2026-07-23
 
@@ -11,6 +11,7 @@
 # Table of Contents
 
 - [System Architecture](#system-architecture)
+- [Table of Contents](#table-of-contents)
 - [1. Introduction](#1-introduction)
 - [2. Architectural Goals](#2-architectural-goals)
   - [AG-001: Serverless Architecture](#ag-001-serverless-architecture)
@@ -29,8 +30,9 @@
 - [4. System Context](#4-system-context)
 - [5. Container Architecture](#5-container-architecture)
 - [6. Component Architecture](#6-component-architecture)
-  - [6.1 FastAPI Backend Component Diagram](#61-fastapi-backend-component-diagram)
-  - [6.2 Prediction Pipeline Component Diagram](#62-prediction-pipeline-component-diagram)
+  - [6.1 Command-Line Interface (CLI) Component Diagram](#61-command-line-interface-cli-component-diagram)
+  - [6.2 FastAPI Backend Component Diagram](#62-fastapi-backend-component-diagram)
+  - [6.3 Prediction Pipeline Component Diagram](#63-prediction-pipeline-component-diagram)
     - [Prediction Pipeline Components](#prediction-pipeline-components)
       - [Pipeline Orchestrator](#pipeline-orchestrator)
       - [Feature Retriever](#feature-retriever)
@@ -38,11 +40,11 @@
       - [SHAP Explainer](#shap-explainer)
       - [AQI Calculator](#aqi-calculator)
       - [Prediction Formatter](#prediction-formatter)
-  - [6.3 Training Pipeline Component Diagram](#63-training-pipeline-component-diagram)
-  - [6.4 Feature Pipeline Component Diagram](#64-feature-pipeline-component-diagram)
-  - [6.5 Dashboard Component Diagram](#65-dashboard-component-diagram)
-  - [6.6 Prediction Data Flow Diagram](#66-prediction-data-flow-diagram)
-  - [6.5 Deployment Diagram](#65-deployment-diagram)
+  - [6.4 Training \& Finetuning Pipeline Component Diagram](#64-training--finetuning-pipeline-component-diagram)
+  - [6.5 Feature Pipeline Component Diagram](#65-feature-pipeline-component-diagram)
+  - [6.6 Dashboard Component Diagram](#66-dashboard-component-diagram)
+  - [6.7 Prediction Data Flow Diagram](#67-prediction-data-flow-diagram)
+  - [6.8 Deployment Diagram](#68-deployment-diagram)
 
 ---
 
@@ -66,7 +68,7 @@ The system shall leverage managed cloud services where possible to minimize infr
 
 ## AG-002: Modular Design
 
-The system shall separate data collection, feature engineering, model training, prediction, visualization, and workflow orchestration into independent components with clearly defined responsibilities.
+The system shall separate data collection, feature engineering, first-time model training, model finetuning, prediction, visualization, CLI execution, and workflow orchestration into independent components with clearly defined responsibilities.
 
 ## AG-003: Reproducibility
 
@@ -74,7 +76,7 @@ Machine learning experiments, datasets, features, and trained models shall be ve
 
 ## AG-004: Automation
 
-Data collection, feature generation, model retraining, and deployment workflows shall execute automatically through scheduled workflows with minimal manual intervention.
+Data collection, feature generation, model fine-tuning, and deployment workflows shall execute automatically through scheduled workflows with minimal manual intervention.
 
 ## AG-005: Maintainability
 
@@ -106,9 +108,11 @@ The following functional requirements have the greatest influence on the system 
 |-------------|----------------------|
 | Automated data collection | Requires a scheduled data ingestion pipeline. |
 | Feature engineering | Requires a dedicated feature processing component and Feature Store integration. |
-| Model training | Requires an isolated training pipeline capable of producing versioned models. |
+| Initial Model Training | Requires a first-time training pipeline capable of building models from scratch. |
+| Model Finetuning | Requires a scheduled finetuning pipeline for iterative retraining on new observations. |
 | Pollutant prediction | Requires independent prediction models for each target pollutant. |
 | AQI calculation | Requires a post-processing component that derives AQI from predicted pollutant concentrations. |
+| Developer & Operational CLI | Requires a Command-Line Interface (CLI) layer for offline training, manual predictions, testing, and feature triggers by ML Engineers. |
 | Explainability | Requires integration of SHAP into the prediction workflow. |
 | Interactive dashboard | Requires a web-based presentation layer for visualization and user interaction. |
 
@@ -124,7 +128,7 @@ The architecture is designed to satisfy the following quality attributes:
 | Maintainability | Modular components with clearly defined responsibilities. |
 | Reliability | Automated workflows with deterministic execution. |
 | Performance | Efficient retrieval of features and models for prediction. |
-| Usability | Simple web dashboard accessible through a browser. |
+| Usability | Simple web dashboard accessible through a browser and direct CLI commands for engineers. |
 
 ---
 
@@ -137,10 +141,11 @@ The following constraints have been established during project planning:
 | Serverless architecture | Managed cloud services shall be preferred over self-managed infrastructure. |
 | OpenWeather API | Environmental data shall be obtained from OpenWeather. |
 | Hopsworks | Feature storage and model registry shall be provided by Hopsworks. |
-| GitHub Actions | Workflow automation shall be implemented using GitHub Actions. |
+| GitHub Actions | Scheduled workflow automation shall be implemented using GitHub Actions. |
 | FastAPI | Backend services shall expose prediction functionality through FastAPI. |
 | Streamlit | The user interface shall be implemented using Streamlit. |
-| PyTorch | Deep learning models shall be implemented using PyTorch. |
+| PyTorch / Scikit-Learn | Deep learning and machine learning models shall be implemented using PyTorch and Scikit-Learn. |
+| CLI (Bash/Python) | CLI commands shall be provided for direct operational and offline pipeline management. |
 
 ---
 
@@ -157,14 +162,19 @@ The architecture is guided by the following approved Architectural Decision Reco
 | ADR-005 | Use Hopsworks as the Feature Store and Model Registry. |
 | ADR-006 | Use GitHub Actions for workflow automation. |
 | ADR-007 | Use FastAPI as the backend framework. |
+| ADR-008 | Implement a CLI layer for offline testing, initial training, and feature engineering triggers. |
 
 ---
 
 # 4. System Context
 
-The Pearls AQI Predictor operates within a broader ecosystem of external users and cloud services. At the highest level, the system collects environmental observations from OpenWeather, stores machine learning assets in Hopsworks, executes scheduled workflows using GitHub Actions, and provides AQI forecasts to end users through a web dashboard.
+The Pearls AQI Predictor operates within a broader ecosystem of external human actors (End-Users and ML-Engineers) and cloud services. At the highest level:
 
-The system boundary consists of all software developed as part of the Pearls AQI Predictor. External services communicate with the system through well-defined interfaces and are not considered part of the application architecture.
+- **End-Users** interact with the web **Dashboard** to view AQI forecasts and pollutant trends.
+- **ML-Engineers** use the **Command-Line Interface (CLI)** to execute offline training, model evaluations, manual feature engineering, and offline predictions.
+- **OpenWeather API** provides raw historical and forecast weather/pollutant observations.
+- **Hopsworks** stores engineered features (Feature Store) and versioned models (Model Registry).
+- **GitHub Actions** automates scheduled executions of the feature and finetuning pipelines.
 
 ![System Context Diagram](figures/context_diagram.svg)
 
@@ -174,21 +184,22 @@ The system boundary consists of all software developed as part of the Pearls AQI
 
 # 5. Container Architecture
 
-The Pearls AQI Predictor consists of several independently deployable containers, each responsible for a specific aspect of the machine learning workflow. These containers communicate through well-defined interfaces and shared cloud services.
+The Pearls AQI Predictor consists of several independently executable and deployable containers, each responsible for a specific aspect of the machine learning workflow.
 
-The architecture is organized into three primary workflows:
+The architecture is organized into the following main containers/subsystems:
 
-- Feature Pipeline
-- Training Pipeline
-- Prediction Pipeline
-
-Supporting these workflows are the FastAPI backend, Streamlit dashboard, Hopsworks Feature Store and Model Registry, OpenWeather API, and GitHub Actions for workflow orchestration.
-
-Separating these responsibilities improves maintainability, reproducibility, and scalability while allowing each workflow to execute independently according to its own schedule.
+- **Command-Line Interface (CLI)**: Bash/Python CLI container enabling ML-Engineers to trigger training from scratch, model finetuning, feature engineering, and offline prediction commands.
+- **Dashboard**: Streamlit container providing end-users interactive visualization of AQI and pollutant trends.
+- **Backend**: FastAPI Python backend serving prediction requests and loading production models.
+- **Feature Pipeline**: Python-based scheduled ETL pipeline fetching data from OpenWeather, engineering features, and pushing them to Hopsworks.
+- **Training Pipeline**: Python container responsible for training pollutant forecasting models **from scratch** on initial dataset versions and registering initial artifacts in Hopsworks.
+- **Finetuning Pipeline**: Scheduled container responsible for **finetuning** existing pollutant models on incoming feature store updates and updating the model registry.
+- **Prediction Pipeline**: Python, Scikit-learn, and PyTorch runtime container executing real-time inference using production features and models.
+- **Hopsworks & GitHub Actions**: Managed external services for feature/model storage and automated scheduled pipeline orchestration.
 
 ![Container Diagram](figures/container_diagram.svg)
 
-**Figure 5.1.** Container Diagram showing the major containers within the Pearls AQI Predictor, including the Dashboard, Backend, Feature Pipeline, Prediction Pipeline, and Training Pipeline, along with their interactions with external services such as OpenWeather, Hopsworks, and GitHub Actions.
+**Figure 5.1.** Container Diagram showing the major containers within the Pearls AQI Predictor, including the Command-Line Interface, Dashboard, Backend, Feature Pipeline, First-Time Training Pipeline, Finetuning Pipeline, and Prediction Pipeline.
 
 ---
 
@@ -196,23 +207,39 @@ Separating these responsibilities improves maintainability, reproducibility, and
 
 The component architecture decomposes the major application containers into their internal software components and illustrates the relationships between them.
 
-## 6.1 FastAPI Backend Component Diagram
+---
 
-![FastAPI Backend Component Diagram](figures/backend_component_diagram.svg)
+## 6.1 Command-Line Interface (CLI) Component Diagram
 
-**Figure 6.1.** FastAPI Backend Component Diagram showing the internal components responsible for handling API requests, formatting responses, and communicating with the prediction pipeline service.
+The CLI Layer acts as the operational and developer interface for Machine Learning Engineers. It allows direct interaction with the system without needing the web backend or dashboard.
+
+Responsibilities include:
+- Executing first-time model training from scratch via the **Training Pipeline**.
+- Triggering model finetuning runs via the **Finetuning Pipeline**.
+- Triggering manual feature engineering and extraction via the **Feature Pipeline**.
+- Sending direct prediction requests and retrieving forecast results via the **Prediction Pipeline**.
+
+![CLI Component Diagram](figures/cli_component_diagram.svg)
+
+**Figure 6.1.** CLI Component Diagram showing the internal command parsers, execution engines, and communication endpoints interfacing with backend pipelines and Hopsworks.
 
 ---
 
-## 6.2 Prediction Pipeline Component Diagram
+## 6.2 FastAPI Backend Component Diagram
 
-The Prediction Pipeline is responsible for executing the AQI prediction workflow after receiving a prediction request from the backend API. It coordinates feature retrieval, model inference, explainability generation, AQI computation, and response formatting through a centralized orchestration component.
+![FastAPI Backend Component Diagram](figures/backend_component_diagram.svg)
 
-The Prediction Pipeline follows an orchestrator-based design where individual services remain loosely coupled. The Pipeline Orchestrator manages communication between components and provides the required prediction context to downstream services such as the SHAP Explainer and AQI Calculator.
+**Figure 6.2.** FastAPI Backend Component Diagram showing the internal components responsible for handling API requests, formatting responses, and communicating with the prediction pipeline service.
+
+---
+
+## 6.3 Prediction Pipeline Component Diagram
+
+The Prediction Pipeline is responsible for executing the AQI prediction workflow after receiving a prediction request from either the FastAPI backend API or the CLI Layer. It coordinates feature retrieval, model inference, explainability generation, AQI computation, and response formatting through a centralized orchestration component.
 
 ![Prediction Pipeline Component Diagram](figures/prediction_pipeline_component_diagram.svg)
 
-**Figure 6.2.** Prediction Pipeline Component Diagram showing the internal components responsible for feature retrieval, model inference, explainability generation, AQI calculation, and prediction response formatting. The Pipeline Orchestrator coordinates interactions between these components and external services including the Hopsworks Feature Store and Model Registry.
+**Figure 6.3.** Prediction Pipeline Component Diagram showing the internal components responsible for feature retrieval, model inference, explainability generation, AQI calculation, and prediction response formatting.
 
 ### Prediction Pipeline Components
 
@@ -220,212 +247,89 @@ The Prediction Pipeline follows an orchestrator-based design where individual se
 
 The Pipeline Orchestrator acts as the central coordination component of the prediction workflow. It manages the execution sequence and communication between prediction services.
 
-Responsibilities include:
-
-- Initiating prediction workflows.
-- Coordinating feature retrieval and model inference.
-- Passing prediction context to explainability and post-processing services.
-- Aggregating prediction outputs before response formatting.
-
 #### Feature Retriever
 
-The Feature Retriever obtains required input features from the Feature Store.
-
-It communicates with the Hopsworks Feature Store and provides standardized feature inputs to the prediction workflow.
+The Feature Retriever obtains required input features from the Feature Store hosted on Hopsworks.
 
 #### Inference Engine
 
-The Inference Engine performs model inference using the trained prediction models.
-
-It retrieves model artifacts through the Hopsworks Model Registry and generates pollutant concentration predictions.
+The Inference Engine performs model inference using the trained prediction models (PyTorch / Scikit-Learn). It retrieves model artifacts through the Hopsworks Model Registry.
 
 #### SHAP Explainer
 
 The SHAP Explainer generates feature contribution explanations for model predictions.
 
-The component receives prediction context from the Pipeline Orchestrator instead of directly depending on the Inference Engine, maintaining loose coupling between prediction execution and explainability generation.
-
 #### AQI Calculator
 
-The AQI Calculator derives the final AQI value from predicted pollutant concentrations according to the defined AQI calculation rules.
+The AQI Calculator derives the final AQI value from predicted pollutant concentrations according to domain calculation rules.
 
 #### Prediction Formatter
 
-The Prediction Formatter prepares the final prediction response by combining:
-
-- Pollutant predictions.
-- AQI results.
-- SHAP explanations.
-
-The formatted response is returned through the Prediction Pipeline API.
+The Prediction Formatter prepares the final prediction response by combining pollutant predictions, AQI results, and SHAP explanations.
 
 ---
 
-## 6.3 Training Pipeline Component Diagram
+## 6.4 Training & Finetuning Pipeline Component Diagram
 
-The Training Pipeline is responsible for constructing training datasets, training pollutant prediction models, evaluating model performance, and registering approved models for deployment. The workflow is coordinated by the Pipeline Orchestrator, which manages the complete training lifecycle.
+The system maintains a clear separation between initial **first-time model training** and automated **model finetuning**:
 
-**Pipeline Orchestrator**
+1. **First-Time Training Pipeline**:
+   - Triggered via the **CLI** by an ML Engineer.
+   - Responsible for building pollutant forecasting models **from scratch** using raw historical baseline datasets and initial feature sets.
+   - Registers baseline model artifacts and metrics into the **Hopsworks Model Registry**.
 
-The Pipeline Orchestrator begins a training run through the Training Pipeline Interface. It coordinates dataset construction, model training, model evaluation, and model registration while interacting with external machine learning services.
-
-**Dataset Builder**
-
-The Dataset Builder prepares training datasets by requesting historical feature data from the Training Feature Retriever, which retrieves the required records from the Hopsworks Feature Store.
-
-**Model Trainer**
-
-The Model Trainer trains pollutant-specific prediction models using the prepared datasets and records experiment metadata, metrics, and artifacts in the MLflow Tracking Server.
-
-**Model Evaluator**
-
-The Model Evaluator assesses the performance of newly trained models. During evaluation, the Pipeline Orchestrator retrieves the currently registered production models through the Model Registrar, enabling comparison between newly trained models and existing deployed models.
-
-Following evaluation, the Pipeline Orchestrator instructs the Model Registrar to register or promote approved models within the Hopsworks Model Registry.
-
-Separating training, evaluation, registration, and experiment tracking into dedicated components improves maintainability, reproducibility, and extensibility while supporting automated model lifecycle management.
+2. **Finetuning Pipeline**:
+   - Automated via **GitHub Actions** (or manually via CLI).
+   - Reads the latest training features from the **Hopsworks Feature Store**.
+   - Finetunes existing models with newly ingested data observations and updates model versions in the **Hopsworks Model Registry**.
 
 ![Training Pipeline Component Diagram](figures/training_pipeline_component_diagram.svg)
 
-**Figure 6.3.** Training Pipeline Component Diagram showing the internal components responsible for dataset construction, feature retrieval, model training, evaluation, experiment tracking, and model registration, together with their interactions with the Hopsworks Feature Store, Hopsworks Model Registry, and MLflow Tracking Server.
+**Figure 6.4.** Training and Finetuning Pipeline Component Diagram showing how the First-Time Training Pipeline (from scratch) and Finetuning Pipeline interact with the CLI, GitHub Actions, Feature Store, and Model Registry.
 
 ---
 
-## 6.4 Feature Pipeline Component Diagram
+## 6.5 Feature Pipeline Component Diagram
 
-The Feature Pipeline is responsible for acquiring raw weather observations, transforming them into machine learning features, validating the generated feature set, and storing validated features in the AQI Feature Store. The workflow is coordinated by the Pipeline Orchestrator, which manages the complete feature engineering lifecycle.
-
-**Pipeline Orchestrator**
-
-The Pipeline Orchestrator initiates feature engineering through the Feature Pipeline Interface. It coordinates raw data extraction, feature transformation, data validation, and feature storage while managing the overall execution of the pipeline.
-
-**Raw Data Extractor**
-
-The Raw Data Extractor retrieves historical weather observations from the OpenWeather API and provides the raw data required for feature engineering.
-
-**Feature Transformer**
-
-The Feature Transformer processes the retrieved weather observations and applies feature engineering techniques to produce machine learning features suitable for downstream model training and inference.
-
-**Data Validator**
-
-The Data Validator verifies that the engineered features satisfy the required quality, schema, and consistency constraints before they are persisted.
-
-**Feature Writer**
-
-The Feature Writer stores the validated feature dataset in the AQI Feature Store hosted on the Hopsworks platform, making the features available to downstream machine learning pipelines.
-
-Separating data extraction, feature engineering, validation, and persistence into dedicated components improves maintainability, modularity, and extensibility while isolating interactions with external systems.
+The Feature Pipeline is responsible for acquiring raw weather observations from the OpenWeather API, transforming them into machine learning features, validating the generated feature set, and storing validated features in the Hopsworks Feature Store. It can be triggered automatically via **GitHub Actions** or manually via the **CLI**.
 
 ![Feature Pipeline Component Diagram](figures/feature_pipeline_component_diagram.svg)
 
-**Figure 6.4.** Feature Pipeline Component Diagram showing the internal components responsible for raw data extraction, feature transformation, data validation, and feature storage, together with their interactions with the OpenWeather API and the Hopsworks Feature Store.
+**Figure 6.5.** Feature Pipeline Component Diagram showing interactions with OpenWeather and the Hopsworks Feature Store.
 
 ---
 
-## 6.5 Dashboard Component Diagram
+## 6.6 Dashboard Component Diagram
 
-The Dashboard Component is responsible for processing user requests, retrieving historical environmental metrics, querying model inference endpoints, and serving transformed analytical data to the user interface. The overall request-response flow is coordinated by the Dashboard Controller, which manages the lifecycle of data retrieval and visualization preparation.
+The Dashboard Component processes user requests, retrieves historical metrics, queries model inference endpoints, and serves transformed analytical data to the user interface.
 
-**Dashboard Controller**
+![Dashboard Component Diagram](figures/dashboard_component_diagram.svg)
 
-The Dashboard Controller receives incoming requests through the Dashboard Interface. It orchestrates the end-to-end data processing workflow by delegating tasks to dedicated sub-services to retrieve historical metrics, fetch predictions, and format dashboard view models.
-
-**Dashboard Service**
-
-The Dashboard Service aggregates, formats, and prepares the core dashboard data, transforming raw domain models into optimized view models tailored for frontend presentation.
-
-**Historical Data Service**
-
-The Historical Data Service queries and retrieves historical Air Quality Index (AQI) and weather metrics, providing the necessary contextual time-series data for analysis and display.
-
-**Prediction Service**
-
-The Prediction Service interacts with model inference endpoints to retrieve generated AQI predictions, enabling real-time forecasting displays on the dashboard interface.
-
-Separating controller orchestration, data formatting, historical queries, and prediction retrieval into dedicated services enhances modularity, maintainability, and testing isolation while streamlining integration with external backend infrastructure like the FastAPI Backend.
-
-![Feature Pipeline Component Diagram](figures/dashboard_component_diagram.svg)
-
-**Figure 6.5.** Dashboard Component Diagram showing the internal components responsible for controller orchestration, dashboard data formatting, historical data retrieval, and prediction fetching, together with their interactions with the FastAPI Backend.
+**Figure 6.6.** Dashboard Component Diagram showing internal presentation services and communication with the FastAPI Backend.
 
 ---
 
-## 6.6 Prediction Data Flow Diagram
+## 6.7 Prediction Data Flow Diagram
 
-The Prediction Data Flow Diagram illustrates how real-time inference requests travel through the system—from initial user action on the dashboard to pipeline delegation, feature fetching, model evaluation, and final response delivery. The architecture emphasizes low-latency execution and strict decoupling between the API Gateway and external machine learning infrastructure by delegating inference tasks entirely to the Prediction Pipeline Component.
-
-**Dashboard Interface**
-
-The Dashboard Interface accepts user-initiated requests for air quality forecasts and submits them to the prediction endpoint on the FastAPI Backend.
-
-**FastAPI Backend**
-
-The FastAPI Backend functions as the system's API Gateway. To maintain a strict boundary separation, it delegates the entire prediction workflow to the Prediction Pipeline Component rather than interacting directly with underlying feature and model storage.
-
-**Prediction Pipeline Component**
-
-The Prediction Pipeline encapsulates the core inference lifecycle. Upon receiving a delegated execution request, it coordinates feature retrieval, model execution, calculations, and explanations:
-* **AQI Feature Store**: The pipeline fetches pre-engineered online feature vectors directly from the feature store on the Hopsworks platform.
-* **AQI Model Registry**: The pipeline loads trained model artifacts directly from the model registry on Hopsworks to execute real-time inference.
-* **Inference & Explanations**: The pipeline computes raw predictions, calculates domain-specific AQI metrics, and generates feature importance explanations using SHAP values before formatting the response into a unified payload.
-
-**Response Delivery**
-
-The formatted prediction payload is returned to the FastAPI Backend, which serves it back to the Dashboard Interface for user visualization.
-
-Delegating inference execution to a dedicated Prediction Pipeline encapsulates Hopsworks platform interactions, ensuring high maintainability, strict boundary isolation, and modular scalability across backend services.
+The Prediction Data Flow Diagram illustrates how inference requests travel through the system—either from an **End-User** via the Dashboard and FastAPI Backend, or from an **ML-Engineer** via the CLI container.
 
 ![Prediction Data Flow Diagram](figures/prediction_data_flow_diagram.svg)
 
-**Figure 6.6.** Prediction Data Flow Diagram showing the sequence of operations from client prediction requests through delegation to the Prediction Pipeline, feature and artifact fetching from Hopsworks, inference execution with SHAP explanations, and payload delivery back to the Dashboard Interface.
+**Figure 6.7.** Prediction Data Flow Diagram showing request pathways through Backend/CLI, Feature Store fetching, Model Registry loading, and inference execution with SHAP explanations.
 
 ---
 
-## 6.5 Deployment Diagram
+## 6.8 Deployment Diagram
 
-The Deployment Diagram illustrates the physical deployment of the Air Quality Prediction System across its execution environments and external services. The system is deployed using a distributed architecture consisting of a Cloud Application Server for serving prediction requests, a GitHub Actions Runner for executing automated data engineering and model training workflows, the Hopsworks Platform for managed MLOps infrastructure, and the OpenWeather services for external data acquisition.
+The Deployment Diagram illustrates the physical deployment of the Air Quality Prediction System across its execution environments and external services.
 
-**User Client Device**
-
-Users interact with the system through a standard web browser hosted on the User Client Device. All user requests are transmitted securely over HTTPS to the Cloud Application Server, where the dashboard interface and backend services are deployed.
-
-**Cloud Application Server**
-
-The Cloud Application Server hosts the runtime components responsible for serving prediction requests.
-
-The Streamlit Dashboard provides the web-based user interface, allowing users to submit prediction requests and visualize air quality forecasts.
-
-The FastAPI Backend Service exposes REST API endpoints that coordinate feature retrieval, model loading, and prediction requests.
-
-The Prediction Service performs inference using the deployed machine learning models retrieved from the Hopsworks Model Registry.
-
-The Cloud Application Server communicates with the Hopsworks Platform to retrieve engineered features from the Feature Store and the latest approved models from the Model Registry.
-
-**GitHub Actions Runner**
-
-The GitHub Actions Runner hosts the automated CI/CD workflows responsible for data engineering and model lifecycle management.
-
-The Feature Engineering Pipeline periodically retrieves weather and air quality observations from the OpenWeather REST API, performs feature engineering, and publishes engineered features to the Hopsworks Feature Store.
-
-The Model Training Pipeline periodically retrains pollutant prediction models using the latest engineered features and registers approved models within the Hopsworks Model Registry.
-
-The GitHub Actions Runner also deploys updated application components to the Cloud Application Server as part of the automated deployment workflow.
-
-**Hopsworks Platform**
-
-The Hopsworks Platform provides the managed machine learning infrastructure supporting both training and inference.
-
-The Hopsworks Feature Store stores engineered air quality features used by the Feature Engineering Pipeline during training and by the Prediction Service during inference.
-
-The Hopsworks Model Registry stores versioned machine learning models produced by the Model Training Pipeline and supplies the latest approved models to the Prediction Service.
-
-**OpenWeather Services**
-
-OpenWeather Services provide the external weather and air quality observations required for feature engineering. The Feature Engineering Pipeline retrieves these observations through the OpenWeather REST API before constructing engineered features for storage in the Feature Store.
-
-Separating user-facing services, automated CI/CD workflows, managed MLOps infrastructure, and external data providers into independent deployment environments improves scalability, maintainability, security, and operational reliability while enabling automated data processing, model lifecycle management, and real-time prediction serving.
+- **User Client Device**: Browser accessing Streamlit Dashboard over HTTPS.
+- **Developer / Operational Workstation**: Terminal executing CLI container commands.
+- **Cloud Application Server**: Hosts Streamlit Dashboard, FastAPI Backend, and the Prediction Pipeline runtime.
+- **GitHub Actions Runner**: Executes scheduled Feature Ingestion and Model Finetuning workflows.
+- **Hopsworks Platform**: Managed cloud Feature Store and Model Registry.
+- **OpenWeather Services**: External REST API providing weather and air quality observations.
 
 ![Deployment Diagram](figures/deployment_diagram.svg)
 
-**Figure 6.5.** Deployment Diagram showing the physical deployment of the Air Quality Prediction System across the User Client Device, Cloud Application Server, GitHub Actions Runner, Hopsworks Platform, and OpenWeather Services, together with the communication pathways supporting prediction serving, automated feature engineering, model training, model deployment, and external data acquisition.
+**Figure 6.8.** Deployment Diagram showing the physical infrastructure and communication channels across all runtime environments.
