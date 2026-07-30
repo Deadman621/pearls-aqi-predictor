@@ -54,6 +54,16 @@
     - [5.3.4 ModelEvaluator](#534-modelevaluator)
     - [5.3.5 ModelRegistrar](#535-modelregistrar)
   - [5.4 Pipeline Responsibilities](#54-pipeline-responsibilities)
+- [6. Feature Pipeline Design](#6-feature-pipeline-design)
+  - [6.1 Feature Pipeline Class Diagram](#61-feature-pipeline-class-diagram)
+  - [6.2 Pipeline Execution Workflow](#62-pipeline-execution-workflow)
+  - [6.3 Component Breakdown](#63-component-breakdown)
+    - [6.3.1 PipelineOrchestrator](#631-pipelineorchestrator)
+    - [6.3.2 RawDataExtractor](#632-rawdataextractor)
+    - [6.3.3 DataValidator](#633-datavalidator)
+    - [6.3.4 FeatureTransformer](#634-featuretransformer)
+    - [6.3.5 FeatureWriter](#635-featurewriter)
+  - [6.4 Pipeline Responsibilities](#64-pipeline-responsibilities)
 
 ---
 
@@ -601,3 +611,123 @@ The First-Time Model Training Pipeline is strictly responsible for:
 * Evaluating candidate models and selecting the top-performing model architecture per pollutant.
 * Registering approved baseline model artifacts into the Hopsworks Model Registry.
 
+Here is the complete **Feature Pipeline Design** documentation section, structured as **Section 2** to maintain consistency with your project structure and matching your class diagram.
+
+---
+
+# 6. Feature Pipeline Design
+
+This section describes the detailed design of the Feature Pipeline subsystem, which is responsible for ingesting live weather and air quality observations, validating payload schemas, transforming raw metrics into engineered feature matrices, and writing feature groups to the feature store.
+
+The pipeline runs on a scheduled basis to ensure downstream training, fine-tuning, and prediction pipelines always have access to up-to-date, structured atmospheric feature vectors.
+
+---
+
+## 6.1 Feature Pipeline Class Diagram
+
+The Feature Pipeline follows an orchestrator pattern centered around the **PipelineOrchestrator**, which implements the **FeaturePipelineInterface**. The orchestrator coordinates execution across extraction (**RawDataExtractor**), validation (**DataValidator**), transformation (**FeatureTransformer**), and storage (**FeatureWriter**) components.
+
+External integration points connect the **RawDataExtractor** to the external **OpenWeather API** and the **FeatureWriter** to the **AQI Feature Store** hosted on the **Hopsworks Platform**.
+
+![Feature Pipeline Class Diagram](figures/feature_pipeline_class_diagram.svg)
+
+**Figure 6.1.** Static structure of the Feature Pipeline subsystem. The pipeline orchestrator manages real-time data ingestion from OpenWeather API, data validation checks, feature transformations, and insertion into Hopsworks Feature Store.
+
+---
+
+## 6.2 Pipeline Execution Workflow
+
+The operational flow of the feature ingestion and processing pipeline follows a clear 4-step sequence:
+
+1. **Invocation**: The `PipelineOrchestrator` receives an execution trigger via `run_pipeline()`.
+2. **Data Ingestion**: The `RawDataExtractor` queries the external **OpenWeather API** via `extract()` to pull raw meteorological metrics and pollutant concentration levels ($PM_{2.5}, PM_{10}, O_3, NO_2, SO_2, CO$), returning a `RawData` payload.
+3. **Validation**:
+   * The `DataValidator` evaluates raw incoming data structures via `validate()`.
+   * Returns a `Tuple[bool, str]` indicating success/failure status and associated error or warning logs.
+
+
+4. **Transformation**:
+   * Upon successful validation, the `FeatureTransformer` calls `transform()` on `RawData`.
+   * Handles missing value imputation, unit conversions, temporal aggregation, and lag/rolling feature calculations, returning `TransformedData`.
+
+
+5. **Feature Store Ingestion**:
+   * The `FeatureWriter` executes `write()` to save the structured feature matrix into designated feature groups inside the **AQI Feature Store** on the **Hopsworks Platform**.
+
+
+
+---
+
+## 6.3 Component Breakdown
+
+### 6.3.1 PipelineOrchestrator
+
+The orchestrator implements the primary interface contract for feature ingestion jobs.
+
+* **Interface**: Implements `FeaturePipelineInterface`.
+* **Primary Responsibility**: Sequentially executes extraction, validation, transformation, and storage steps. Handles pipeline error bubbling and returns execution status.
+* **Methods**:
+* `run_pipeline(): Status`: Executes the end-to-end feature pipeline execution flow.
+
+
+
+---
+
+### 6.3.2 RawDataExtractor
+
+The extraction component serves as the gateway to external environmental data providers.
+
+* **External Interaction**: Connects via HTTP API calls to the **OpenWeather API**.
+* **Primary Responsibility**: Extracts real-time weather parameters (temperature, humidity, wind speed/direction, pressure) and atmospheric pollutant concentrations.
+* **Methods**:
+* `extract(): RawData`: Fetches raw json responses and returns a structured `RawData` object.
+
+
+
+---
+
+### 6.3.3 DataValidator
+
+The validator enforces schema compliance and data quality thresholds before transformation.
+
+* **Primary Responsibility**: Ensures mandatory fields exist, values fall within realistic physical ranges, and null counts stay within allowable limits.
+* **Methods**:
+* `validate(): Tuple[bool, str]`: Checks raw input data validity. Returns a boolean pass/fail flag along with a descriptive log message.
+
+
+
+---
+
+### 6.3.4 FeatureTransformer
+
+The transformation module converts raw observation payloads into model-ready feature sets.
+
+* **Primary Responsibility**: Executes feature engineering logic including timestamp parsing, cyclically encoding temporal features (hour, day of week, month), calculating rolling averages, creating spatial/meteorological interaction features, and producing lag variables.
+* **Methods**:
+* `transform(): TransformedData`: Converts validated `RawData` into formatted `TransformedData` feature vectors.
+
+
+
+---
+
+### 6.3.5 FeatureWriter
+
+The storage handler interfaces with cloud feature store infrastructure.
+
+* **External Interaction**: Connects via Hopsworks SDK to the **AQI Feature Store**.
+* **Primary Responsibility**: Writes transformed feature records into target Hopsworks Feature Groups with appropriate primary keys and event timestamps.
+* **Methods**:
+* `write(): Status`: Inserts or upserts feature rows into Hopsworks and returns an execution status signal.
+
+
+
+---
+
+## 6.4 Pipeline Responsibilities 
+
+The Feature Pipeline is strictly responsible for:
+
+* Fetching raw weather and air quality observations from the OpenWeather API.
+* Enforcing structural schema validation and value range checks on raw incoming payloads.
+* Processing raw observations into engineered lag, temporal, and aggregated feature matrices.
+* Persisting structured feature matrices to the Hopsworks Feature Store for downstream training, fine-tuning, and inference.
