@@ -33,6 +33,17 @@
     - [3.3.4 AQICalculator](#334-aqicalculator)
     - [3.3.5 PredictionFormatter](#335-predictionformatter)
   - [3.4 Pipeline Responsibilities](#34-pipeline-responsibilities)
+- [4. Model Finetuning Pipeline Design](#4-model-finetuning-pipeline-design)
+  - [4.1 Finetuning Pipeline Class Diagram](#41-finetuning-pipeline-class-diagram)
+  - [4.2 Pipeline Execution Workflow](#42-pipeline-execution-workflow)
+  - [4.3 Component Breakdown](#43-component-breakdown)
+    - [4.3.1 PipelineOrchestrator \& Configuration Classes](#431-pipelineorchestrator--configuration-classes)
+    - [4.3.2 ModelFetcher](#432-modelfetcher)
+    - [4.3.3 FeatureRetriever \& DatasetBuilder](#433-featureretriever--datasetbuilder)
+    - [4.3.4 FineTuner \& BasePollutantModel Interface](#434-finetuner--basepollutantmodel-interface)
+    - [4.3.5 ModelEvaluator](#435-modelevaluator)
+    - [4.3.6 FineTunedModelRegistrar](#436-finetunedmodelregistrar)
+  - [4.4 Pipeline Responsibilities](#44-pipeline-responsibilities)
 
 ---
 
@@ -291,3 +302,153 @@ The Prediction Pipeline is strictly responsible for:
 * Computing pollutant sub-indices and overall AQI values according to US EPA standards.
 * Calculating SHAP feature attributions for model interpretability.
 * Packaging forecast figures, metadata, and SHAP explainability attributes into standardized domain payloads.
+
+---
+
+# 4. Model Finetuning Pipeline Design
+
+This section describes the detailed design of the Model Finetuning Pipeline subsystem, which is responsible for performing incremental retraining and fine-tuning on active production baseline models using newly ingested atmospheric feature observations.
+
+The pipeline ensures continuous model adaptation without requiring retraining from scratch. It retrieves production artifacts from the Model Registry, fine-tunes parameters based on updated feature store batches, evaluates metrics against baseline models, logs experiments to MLflow, and registers improved models back into the Hopsworks Model Registry.
+
+---
+
+## 4.1 Finetuning Pipeline Class Diagram
+
+The Model Finetuning Pipeline uses an orchestrator pattern centered around the **PipelineOrchestrator**, which implements the **FineTuningPipelineInterface**. The orchestrator manages interactions between configuration classes (**FineTuningConfig**, **FineTuningPollutantConfig**, **FineTunedModelConfig**), data ingestion modules (**FeatureRetriever**, **DatasetBuilder**), retraining engines (**ModelFetcher**, **FineTuner**, **Callbacks**), and validation/registration handlers (**ModelEvaluator**, **FineTunedModelRegistrar**).
+
+External connections to the **AQI Feature Store**, **MLflow Tracking Server**, and **AQI Model Registry** on the **Hopsworks Platform** are managed via dedicated adapter interfaces.
+
+![Finetuning Pipeline Class Diagram](figures/fine_tuning_pipeline_class_diagram.svg)
+
+**Figure 4.1.** Static structure of the Model Finetuning Pipeline subsystem. The pipeline orchestrator manages baseline model retrieval, feature batch dataset construction, adapter/layer fine-tuning, MLflow callback tracking, performance validation against baseline models, and conditional model registration in Hopsworks.
+
+---
+
+## 4.2 Pipeline Execution Workflow
+
+The operational flow of the fine-tuning execution follows a structured, multi-step process:
+
+1. **Invocation**: The `PipelineOrchestrator` receives an execution trigger via `run_finetuning_pipeline()`, taking a structured `FineTuningConfig` payload.
+2. **Model Fetching**: The `ModelFetcher` queries the **AQI Model Registry** on Hopsworks via `fetch_best_model()` to download the active production baseline model conforming to the `BasePollutantModel` interface.
+3. **Feature Ingestion & Dataset Construction**:
+   * The `FeatureRetriever` executes `retrieve()` against the **AQI Feature Store** to pull newly updated feature records.
+   * The `DatasetBuilder` processes feature vectors via `construct()` to construct a structured `Dataset` tailored for fine-tuning.
+
+
+4. **Incremental Retraining & Experiment Tracking**:
+   * The `FineTuner` receives hyperparameters from `FineTunedModelConfig` (such as `unfreeze_layers`, `fine_tune_epochs`, `learning_rate`, `weight_decay`, and `warmup_steps`).
+   * Retraining is initiated via `fine_tune()`, invoking `fine_tune(dataset)` on the `BasePollutantModel` and logging parameters, metrics, and adapter checkpoints to the **MLflow Tracking Server** via the `Callbacks` interface.
+
+
+5. **Model Evaluation & Comparison**:
+   * The `ModelEvaluator` executes `evaluate()` and `compare_with_baseline()` to compute comparative evaluation metrics.
+   * The `validate_improvement(BasePollutantModel)` method determines if the fine-tuned candidate outperforms the current production baseline.
+
+
+6. **Model Registration**: If performance improvement is validated, the `FineTunedModelRegistrar` executes `register_fine_tuned()` to publish updated model weights and adapters (`save_adapter()`) to the **AQI Model Registry**.
+
+---
+
+## 4.3 Component Breakdown
+
+### 4.3.1 PipelineOrchestrator & Configuration Classes
+
+The orchestrator and configuration DTOs define fine-tuning parameters across all evaluated atmospheric pollutants ($PM_{2.5}, PM_{10}, O_3, NO_2, SO_2, CO$).
+
+* **FineTuningConfig**: Container class aggregating `pollutant_config` settings for each pollutant model.
+* **FineTuningPollutantConfig**: Holds pollutant-specific settings and wraps the selected model configuration (`selected_model`).
+* **FineTunedModelConfig**: Defines model-level fine-tuning hyperparameters:
+* `model_name`: Identifies the target model artifact.
+* `do_training`: Boolean flag toggling fine-tuning execution.
+* `unfreeze_layers`: Integer specifying top layer count to unfreeze for gradient updates.
+* `fine_tune_epochs`: Number of incremental training epochs.
+* `warmup_steps`: Number of initial learning rate warmup iterations.
+* `learning_rate`: Floating-point step size for gradient updates.
+* `weight_decay`: Regularization parameter preventing catastrophic forgetting.
+
+
+
+---
+
+### 4.3.2 ModelFetcher
+
+The `ModelFetcher` isolates model retrieval operations from the Hopsworks Model Registry.
+
+* **Primary Responsibility**: Queries the **AQI Model Registry** to retrieve the latest production baseline model.
+* **Methods**:
+* `fetch_best_model(): BasePollutantModel`: Downloads model binaries, configurations, and adapter states from Hopsworks and returns an instantiated object implementing the `BasePollutantModel` interface.
+
+
+
+---
+
+### 4.3.3 FeatureRetriever & DatasetBuilder
+
+These components prepare newly ingested feature batches for model adaptation.
+
+* **FeatureRetriever**:
+* `retrieve(): Features`: Queries the **AQI Feature Store** for recent feature group entries containing new meteorological and pollutant observations.
+
+
+* **DatasetBuilder**:
+* `construct(): Dataset`: Merges retrieved features, performs temporal sequence alignment, handles missing values, and builds `Dataset` objects optimized for fine-tuning.
+
+
+
+---
+
+### 4.3.4 FineTuner & BasePollutantModel Interface
+
+The core training execution engine handles parameter updates and adapter state saving.
+
+* **FineTuner**:
+* `fine_tune(): Status`: Manages execution across fine-tuning epochs, delegating parameter optimization to the underlying model and streaming progress metrics through `Callbacks`.
+
+
+* **BasePollutantModel Interface**:
+* `config: FineTuningConfig`: Property storing active fine-tuning configuration parameters.
+* `fine_tune(dataset): Metrics`: Executes gradient updates or incremental boosting steps on target model layers, returning training evaluation metrics.
+* `predict(X): ndarray`: Computes predictions on input feature arrays.
+* `save_adapter(path): Path`: Exports fine-tuned parameter weights or adapter artifacts to local storage prior to registration.
+
+
+
+---
+
+### 4.3.5 ModelEvaluator
+
+The `ModelEvaluator` provides validation checks before candidate models can be promoted.
+
+* **Methods**:
+* `evaluate(): Metrics`: Calculates evaluation metrics (RMSE, MAE, $R^2$) on fine-tuning validation splits.
+* `compare_with_baseline(): Metrics`: Computes relative performance gain or degradation against the active production model.
+* `validate_improvement(BasePollutantModel): bool`: Returns `True` if performance gains satisfy predefined acceptance thresholds, preventing degraded models from entering production.
+
+
+
+---
+
+### 4.3.6 FineTunedModelRegistrar
+
+The `FineTunedModelRegistrar` handles version control and deployment candidate updates.
+
+* **Primary Responsibility**: Commits validated fine-tuned models and adapter weights to the **AQI Model Registry**.
+* **Methods**:
+* `register_fine_tuned(): Status`: Uploads model artifacts, associated metrics, and dependency schemas to Hopsworks, tagging the model version as the new active baseline.
+
+
+
+---
+
+## 4.4 Pipeline Responsibilities 
+
+The Model Finetuning Pipeline is strictly responsible for:
+
+* Fetching production models from the Hopsworks Model Registry for incremental adaptation.
+* Retrieving new feature observations from the Hopsworks Feature Store to construct fine-tuning datasets.
+* Managing hyperparameter settings (unfrozen layers, learning rates, weight decay, warmup steps) per pollutant model.
+* Streaming epoch-level metrics and loss logs to the MLflow Tracking Server.
+* Validating candidate model performance against production baselines using strict acceptance criteria.
+* Registering updated model adapters and artifacts back into the Hopsworks Model Registry.
+
